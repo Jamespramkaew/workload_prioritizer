@@ -16,10 +16,10 @@ Python Project for 12 Group Bell's Lab
 2. create "venv (virtual ennvironment)" คำสั่งนี้
 ## python3.12 -m venv venv
 
-3. สั่งให้ venv ทำงาน (Active)
+3. สั่งให้ venv ทำงาน (Active) *ทำงานทุกครั้งควรเปิด venv*
 ## source venv/bin/activate
 
-4. ติดตั้ง depencies
+4. ติดตั้ง dependencies
 ## pip install -r requirements.txt
 
 5. create ".env" ขึ้นมา
@@ -27,9 +27,11 @@ Python Project for 12 Group Bell's Lab
 6. ลอง RUN คำสั่งนี้
 ## uvicorn app.main:app --reload
 
+ปิด venv ใช้ *ปิดได้นะ venv*
+## deactivate
 
 Docker
-start Containers ครั้งแรกจะ download images นานหน่อย
+เปิด deocker เพื่อ start Containers ครั้งแรกจะ download images นานหน่อย
 ## docker-compose up -d
 
 ตรวจสอบว่า Containers ทำงานอยู่
