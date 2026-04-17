@@ -1,6 +1,39 @@
 version: '3.8'
 
 services:
+
+  # frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: workload_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: workload_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres123@db:5432/workload_db
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+
+
   # PostgreSQL Database
   db:
     image: postgres:15-alpine
@@ -20,6 +53,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app-network
 
   # pgAdmin (Web UI for PostgreSQL) - Optional
   pgadmin:
@@ -33,6 +68,13 @@ services:
       - "5050:80"
     depends_on:
       - db
+    networks:
+      - app-network
+
 
 volumes:
   postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
