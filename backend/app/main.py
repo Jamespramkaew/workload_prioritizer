@@ -6,6 +6,8 @@ from contextlib import asynccontextmanager
 import logging
 from app.core.database import test_db_connection, create_tables
 from app.core.exceptions import DatabaseError
+from app.schemas.message_schema import MessageRequest, MessageResponse
+from app.controllers.message_controller import MessageController
 
 # Setup logging
 logging.basicConfig(
@@ -117,3 +119,16 @@ async def general_exception_handler(request: Request, exc: Exception):
             "path": str(request.url.path)
         }
     )
+
+
+# Initialize Controller
+message_controller = MessageController()
+
+
+# API Endpoints
+@app.post("/api/echo", response_model=MessageResponse)
+def echo_message(request_body: MessageRequest):
+    """
+    Echo API endpoint that receives a message and returns it as a result
+    """
+    return message_controller.echo_message(request_body)
