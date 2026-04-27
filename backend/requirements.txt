@@ -8,7 +8,7 @@ charset-normalizer==3.4.7
 click==8.3.2
 cryptography==46.0.7
 fastapi==0.135.3
-pydantic-settings==2.8.2
+pydantic-settings==2.14.0
 google-api-core==2.30.3
 google-api-python-client==2.194.0
 google-auth==2.49.2
@@ -51,6 +51,5 @@ typing_extensions==4.15.0
 uritemplate==4.2.0
 urllib3==2.6.3
 uvicorn==0.44.0
-uvloop==0.22.1
 watchfiles==1.1.1
 websockets==16.0
