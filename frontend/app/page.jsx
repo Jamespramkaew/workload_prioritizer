@@ -152,15 +152,15 @@ export default function App() {
             </div>
           </div>
           <div className="week-nav">
+            {weekOffset !== 0 && (
+              <button className="week-today" onClick={() => setWeekOffset(0)}>{t.today}</button>
+            )}
             <button className="week-arrow" onClick={() => setWeekOffset((w) => w - 1)} aria-label="prev week">‹</button>
             <div className="week-label">
               <div className="week-range">{fmtRange(dates)}</div>
               <div className="week-sub mono">{t.week} · {dates[0].getDate()}–{dates[6].getDate()}</div>
             </div>
             <button className="week-arrow" onClick={() => setWeekOffset((w) => w + 1)} aria-label="next week">›</button>
-            {weekOffset !== 0 && (
-              <button className="week-today" onClick={() => setWeekOffset(0)}>{t.today}</button>
-            )}
           </div>
         </div>
 
