@@ -235,6 +235,191 @@ curl -s -c cookies.txt -b cookies.txt -X DELETE http://localhost:8000/api/users/
 
 ---
 
+## 10. ดู Tasks ทั้งหมด
+
+```bash
+curl -s -b cookies.txt "http://localhost:8000/api/tasks?week_offset=0&status=active" \
+  | python3 -m json.tool
+```
+
+**Query params:**
+- `week_offset` — สัปดาห์ที่ต้องการ (0 = สัปดาห์นี้, 1 = สัปดาห์หน้า, -1 = สัปดาห์ที่แล้ว)
+- `status` — `active` (pending+in_progress), `completed`, `all`
+
+**ผลที่ได้ (200):**
+```json
+[
+  {
+    "id": 1,
+    "title": "ทำการบ้านคณิต",
+    "deadline_date": "2026-05-05",
+    "difficulty": 3,
+    "importance": 4,
+    "comfortable": false,
+    "estimated_hours": 2.5,
+    "status": "pending",
+    "subject_id": 1,
+    "user_id": 1,
+    "created_at": "2026-04-30T10:00:00",
+    "updated_at": null,
+    "task_slots": []
+  }
+]
+```
+
+---
+
+## 11. ดู Task เดียว
+
+```bash
+curl -s -b cookies.txt http://localhost:8000/api/tasks/1 \
+  | python3 -m json.tool
+```
+
+**ผลที่ได้ถ้าไม่เจอ (404):**
+```json
+{
+    "status": "error",
+    "code": 404,
+    "message": "Task with id 1 not found"
+}
+```
+
+---
+
+## 12. สร้าง Task
+
+```bash
+curl -s -b cookies.txt -X POST http://localhost:8000/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "ทำการบ้านคณิต",
+    "deadline_date": "2026-05-05",
+    "difficulty": 3,
+    "importance": 4,
+    "comfortable": false,
+    "estimated_hours": 2.5,
+    "status": "pending",
+    "subject_id": 1,
+    "user_id": 1,
+    "slots": [
+      {
+        "slot_date": "2026-05-01",
+        "start_hour": 9.0,
+        "hours": 1.5
+      }
+    ]
+  }' | python3 -m json.tool
+```
+
+**ผลที่ได้ (201):** — คืน task object เดียวกับข้อ 10
+
+---
+
+## 13. แก้ Task
+
+> ส่งเฉพาะ field ที่อยากเปลี่ยน (`title` หรือ `status`)
+
+```bash
+curl -s -b cookies.txt -X PATCH http://localhost:8000/api/tasks/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "completed"
+  }' | python3 -m json.tool
+```
+
+**status ที่ใช้ได้:** `pending`, `in_progress`, `completed`
+
+---
+
+## 14. ลบ Task
+
+```bash
+curl -s -b cookies.txt -X DELETE http://localhost:8000/api/tasks/1
+```
+
+**ผลที่ได้ (204):** — ไม่มี body
+
+---
+
+## 15. ดู Subjects ทั้งหมด
+
+```bash
+curl -s -b cookies.txt "http://localhost:8000/api/subjects?user_id=1" \
+  | python3 -m json.tool
+```
+
+**ผลที่ได้ (200):**
+```json
+[
+  {
+    "id": 1,
+    "name": "คณิตศาสตร์",
+    "short_name": "MATH",
+    "color": "#FF5733",
+    "sort_order": 0,
+    "user_id": 1,
+    "created_at": "2026-04-30T10:00:00"
+  }
+]
+```
+
+---
+
+## 16. ดู Subject เดียว
+
+```bash
+curl -s -b cookies.txt http://localhost:8000/api/subjects/1 \
+  | python3 -m json.tool
+```
+
+---
+
+## 17. สร้าง Subject
+
+```bash
+curl -s -b cookies.txt -X POST http://localhost:8000/api/subjects \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "คณิตศาสตร์",
+    "short_name": "MATH",
+    "color": "#FF5733",
+    "sort_order": 0,
+    "user_id": 1
+  }' | python3 -m json.tool
+```
+
+**ผลที่ได้ (201):** — คืน subject object เดียวกับข้อ 15
+
+---
+
+## 18. แก้ Subject
+
+> ส่งเฉพาะ field ที่อยากเปลี่ยน
+
+```bash
+curl -s -b cookies.txt -X PATCH http://localhost:8000/api/subjects/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "color": "#00BFFF",
+    "sort_order": 1
+  }' | python3 -m json.tool
+```
+
+**field ที่แก้ได้:** `name`, `short_name`, `color`, `sort_order`
+
+---
+
+## 19. ลบ Subject
+
+```bash
+curl -s -b cookies.txt -X DELETE http://localhost:8000/api/subjects/1
+```
+
+**ผลที่ได้ (204):** — ไม่มี body
+
+---
+
 ## สรุป Endpoints ทั้งหมด
 
 | Method | Path | ต้อง Login | คำอธิบาย |
@@ -249,3 +434,13 @@ curl -s -c cookies.txt -b cookies.txt -X DELETE http://localhost:8000/api/users/
 | GET | `/health` | — | เช็คสถานะ server + DB |
 | GET | `/ping` | — | ping |
 | DELETE | `/api/users/me` | ✓ | [DEBUG] ลบ account ตัวเอง |
+| GET | `/api/tasks` | — | ดู tasks (filter week/status) |
+| GET | `/api/tasks/{id}` | — | ดู task เดียว |
+| POST | `/api/tasks` | — | สร้าง task |
+| PATCH | `/api/tasks/{id}` | — | แก้ task |
+| DELETE | `/api/tasks/{id}` | — | ลบ task |
+| GET | `/api/subjects?user_id=` | — | ดู subjects ของ user |
+| GET | `/api/subjects/{id}` | — | ดู subject เดียว |
+| POST | `/api/subjects` | — | สร้าง subject |
+| PATCH | `/api/subjects/{id}` | — | แก้ subject |
+| DELETE | `/api/subjects/{id}` | — | ลบ subject |

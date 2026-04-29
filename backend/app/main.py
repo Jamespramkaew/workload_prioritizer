@@ -12,6 +12,9 @@ from app.schemas.message_schema import MessageRequest, MessageResponse
 from app.controllers.message_controller import MessageController
 from app.api import auth_routes
 from app.api.user_routes import router as user_router
+from app.api.task_routes import router as task_router
+from app.api.subject_routes import router as subject_router
+import app.models
 
 # Setup logging
 logging.basicConfig(
@@ -166,6 +169,10 @@ app.include_router(user_router, prefix="/api")
 
 # Initialize Controller
 message_controller = MessageController()
+
+# Include routers
+app.include_router(task_router, prefix="/api")
+app.include_router(subject_router, prefix="/api")
 
 
 # API Endpoints
