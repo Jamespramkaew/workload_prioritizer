@@ -8,6 +8,7 @@ from app.core.database import test_db_connection, create_tables
 from app.core.exceptions import DatabaseError
 from app.schemas.message_schema import MessageRequest, MessageResponse
 from app.controllers.message_controller import MessageController
+from app.api import task_slot_routes
 
 # Setup logging
 logging.basicConfig(
@@ -52,6 +53,9 @@ app.add_middleware(
     allow_methods=["*"],              # อนุญาตทุก HTTP methods (GET, POST, PUT, DELETE)
     allow_headers=["*"],              # อนุญาตทุก headers
 )
+
+# Register API Routes
+app.include_router(task_slot_routes.router, prefix="/api", tags=["Task Slots"])
 
 @app.get("/")
 def read_root():
