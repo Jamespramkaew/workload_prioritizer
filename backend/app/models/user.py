@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from ..core.database import Base
@@ -8,7 +8,7 @@ class User(Base):
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(Text, nullable=True)
+    email = Column(Text, nullable=False, unique=True, index=True)
     password = Column(Text, nullable=False)
     display_name = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -22,7 +22,7 @@ class User(Base):
 class UserSettings(Base):
     __tablename__ = "user_settings"
     
-    user_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, index=True)
     chart_type = Column(Text, nullable=False, default="bar")
     capacity = Column(Integer, nullable=False, default=8)
     density = Column(Text, nullable=False, default="medium")
