@@ -26,11 +26,6 @@ def create_task_slot(
 ):
     """
     Create a new slot for a task
-    
-    - **task_id**: ID of the parent task
-    - **slot_date**: Date of the slot (YYYY-MM-DD)
-    - **start_hour**: Start hour (0-23.99)
-    - **hours**: Duration in hours (0.5-12)
     """
     service = TaskSlotService(db)
     return service.create_slot(task_id, slot_data)
@@ -50,17 +45,6 @@ def update_task_slot(
 ):
     """
     Update an existing slot
-    
-    - **task_id**: ID of the parent task
-    - **slot_id**: ID of the slot to update
-    - **slot_date**: (Optional) New date for the slot
-    - **start_hour**: (Optional) New start hour
-    - **hours**: (Optional) New duration
-    
-    Use cases:
-    - Drag & drop: Update only slot_date
-    - Change time: Update start_hour
-    - Change duration: Update hours
     """
     service = TaskSlotService(db)
     return service.update_slot(task_id, slot_id, slot_data)
@@ -79,11 +63,6 @@ def delete_task_slot(
 ):
     """
     Delete a slot
-    
-    - **task_id**: ID of the parent task
-    - **slot_id**: ID of the slot to delete
-    
-    Note: Cannot delete the last slot. A task must have at least one slot.
     """
     service = TaskSlotService(db)
     service.delete_slot(task_id, slot_id)
