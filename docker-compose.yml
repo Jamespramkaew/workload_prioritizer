@@ -14,6 +14,7 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://postgres:postgres123@db:5432/workload_db
+      SECRET_KEY: your_secret_key #อย่าลืมปรับเป็นคีย์ที่ปลอดภัยใน production
     depends_on:
       db:
         condition: service_healthy

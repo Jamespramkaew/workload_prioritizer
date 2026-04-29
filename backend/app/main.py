@@ -4,10 +4,13 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import logging
+import time
 from app.core.database import test_db_connection, create_tables
 from app.core.exceptions import DatabaseError
+import app.models  # ไว้สําหรับการทดสอบการเชื่อมต่อฐานข้อมูลและการสร้างตาราง
 from app.schemas.message_schema import MessageRequest, MessageResponse
 from app.controllers.message_controller import MessageController
+import app.models
 
 # Setup logging
 logging.basicConfig(
@@ -60,6 +63,36 @@ def read_root():
 @app.get("/ping")
 def ping_system():
     return {"status": "success", "detail": "pong!"}
+
+
+@app.get("/health")
+def healthcheck():
+    """ตรวจสอบสถานะของ API และการเชื่อมต่อ database"""
+    start = time.time()
+    try:
+        test_db_connection()
+        db_status = "healthy"
+        db_error = None
+    except DatabaseError as e:
+        db_status = "unhealthy"
+        db_error = e.message
+
+    latency_ms = round((time.time() - start) * 1000, 2)
+    overall = "healthy" if db_status == "healthy" else "degraded"
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK if overall == "healthy" else status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={
+            "status": overall,
+            "checks": {
+                "database": {
+                    "status": db_status,
+                    "latency_ms": latency_ms,
+                    **({"error": db_error} if db_error else {}),
+                }
+            },
+        },
+    )
 
 # Exception Handlers
 @app.exception_handler(HTTPException)
