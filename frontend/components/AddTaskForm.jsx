@@ -49,7 +49,7 @@ function SessionRow({ session, idx, t, onChange, onRemove, canRemove, weekKeys }
 export default function AddTaskForm({ subjects, dayLabels, dates, capacity, onAdd, onAddSubject, onCancel, t }) {
   const weekKeys = dates.map(dateKey);
   const [title, setTitle] = useState('');
-  const [subjectId, setSubjectId] = useState(subjects[0].id);
+  const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? '');
   const [showAddSubj, setShowAddSubj] = useState(false);
   const [newSubjName, setNewSubjName] = useState('');
   const [newSubjColor, setNewSubjColor] = useState(SUBJECT_COLORS[0]);
@@ -105,9 +105,9 @@ export default function AddTaskForm({ subjects, dayLabels, dates, capacity, onAd
     setSessions((prev) => [...prev, { dateKey: deadlineKey, startHour: 20, hours: 1 }]);
   };
 
-  const submitNewSubject = () => {
+  const submitNewSubject = async () => {
     if (!newSubjName.trim() || !onAddSubject) return;
-    const created = onAddSubject({ name: newSubjName, color: newSubjColor });
+    const created = await onAddSubject({ name: newSubjName, color: newSubjColor });
     if (created) {
       setSubjectId(created.id);
       setNewSubjName('');

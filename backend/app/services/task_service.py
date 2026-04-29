@@ -11,27 +11,22 @@ class TaskService:
     @staticmethod
     def list_tasks(
         db: Session,
-        week_offset: int = 0,
+        week_offset: Optional[int] = None,
         status: str = "active"
     ) -> List[Task]:
-        """List tasks filtered by week and status"""
-        today = date.today()
-        week_start = today - timedelta(days=today.weekday())
-        week_end = week_start + timedelta(days=6)
-        week_start = week_start + timedelta(weeks=week_offset)
-        week_end = week_end + timedelta(weeks=week_offset)
-        
         query = db.query(Task)
-        
+
         if status == "active":
             query = query.filter(Task.status.in_(["pending", "in_progress"]))
         elif status != "all":
             query = query.filter(Task.status == status)
-        
-        query = query.filter(
-            (Task.deadline_date >= week_start) & (Task.deadline_date <= week_end)
-        )
-        
+
+        if week_offset is not None:
+            today = date.today()
+            week_start = today - timedelta(days=today.weekday()) + timedelta(weeks=week_offset)
+            week_end = week_start + timedelta(days=6)
+            query = query.filter(Task.deadline_date >= week_start, Task.deadline_date <= week_end)
+
         return query.order_by(Task.deadline_date, Task.importance.desc()).all()
     
     @staticmethod

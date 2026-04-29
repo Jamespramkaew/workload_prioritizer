@@ -1,7 +1,7 @@
 'use client';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { SUBJECTS, STRINGS, makeInitialTasks, weekDates, dateKey } from '../components/data';
+import { STRINGS, weekDates, dateKey } from '../components/data';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 import WorkloadChart from '../components/Chart';
@@ -21,6 +21,30 @@ const TWEAK_DEFAULTS = {
   dark: false,
 };
 
+function apiTaskToLocal(task) {
+  return {
+    id: task.id,
+    title: task.title,
+    subjectId: task.subject_id,
+    deadlineKey: task.deadline_date,
+    difficulty: task.difficulty,
+    importance: task.importance,
+    comfortable: task.comfortable,
+    hours: Number(task.estimated_hours),
+    status: task.status,
+    slots: (task.task_slots || []).map(s => ({
+      id: s.id,
+      dateKey: s.slot_date,
+      startHour: Number(s.start_hour),
+      hours: Number(s.hours),
+    })),
+  };
+}
+
+function apiSubjectToLocal(s) {
+  return { id: s.id, name: s.name, short: s.short_name, color: s.color };
+}
+
 export default function App() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -28,8 +52,8 @@ export default function App() {
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const t = STRINGS[tweaks.language] || STRINGS.en;
   const [weekOffset, setWeekOffset] = useState(0);
-  const [allTasks, setTasks] = useState(makeInitialTasks);
-  const [subjects, setSubjects] = useState(SUBJECTS);
+  const [allTasks, setTasks] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [showSubjMgr, setShowSubjMgr] = useState(false);
   const [showOnb, setShowOnb] = useState(true);
@@ -46,13 +70,32 @@ export default function App() {
     weekKeys.includes(task.deadlineKey)
   ), [allTasks, weekKeys]);
 
+  const fetchSubjects = useCallback(async (userId) => {
+    const res = await fetch(`${API_URL}/api/subjects?user_id=${userId}`, { credentials: 'include' });
+    if (!res.ok) return;
+    const data = await res.json();
+    setSubjects(data.map(apiSubjectToLocal));
+  }, []);
+
+  const fetchTasks = useCallback(async () => {
+    const res = await fetch(`${API_URL}/api/tasks?status=all`, { credentials: 'include' });
+    if (!res.ok) return;
+    const data = await res.json();
+    setTasks(data.map(apiTaskToLocal));
+  }, []);
+
   useEffect(() => {
     fetch(`${API_URL}/auth/verify`, { credentials: 'include' })
       .then(res => {
         if (!res.ok) throw new Error();
         return res.json();
       })
-      .then(data => { setUser(data); setAuthReady(true); })
+      .then(data => {
+        setUser(data);
+        setAuthReady(true);
+        fetchSubjects(data.id);
+        fetchTasks();
+      })
       .catch(() => router.push('/login'));
   }, []);
 
@@ -88,13 +131,31 @@ export default function App() {
     return `${m(a)} ${a.getDate()} – ${m(b)} ${b.getDate()}`;
   };
 
-  const handleAddTask = ({ title, subjectId, deadlineKey, difficulty, importance, comfortable, hours, slots }) => {
-    const task = {
-      id: 't' + Date.now(),
-      title, subjectId, deadlineKey, difficulty, importance, comfortable, hours,
-      slots: slots || [],
-    };
-    setTasks((prev) => [...prev, task]);
+  const handleAddTask = async ({ title, subjectId, deadlineKey, difficulty, importance, comfortable, hours, slots }) => {
+    const res = await fetch(`${API_URL}/api/tasks`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        subject_id: subjectId,
+        deadline_date: deadlineKey,
+        difficulty,
+        importance,
+        comfortable,
+        estimated_hours: hours,
+        status: 'pending',
+        user_id: user.id,
+        slots: (slots || []).map(s => ({
+          slot_date: s.dateKey,
+          start_hour: s.startHour,
+          hours: s.hours,
+        })),
+      }),
+    });
+    if (!res.ok) return;
+    const created = await res.json();
+    setTasks(prev => [...prev, apiTaskToLocal(created)]);
     setShowAdd(false);
   };
 
@@ -106,32 +167,68 @@ export default function App() {
     }));
   };
 
-  const handleDeleteTask = (taskId) => {
-    setTasks((prev) => prev.filter((task) => task.id !== taskId));
+  const handleDeleteTask = async (taskId) => {
+    const res = await fetch(`${API_URL}/api/tasks/${taskId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!res.ok) return;
+    setTasks(prev => prev.filter(t => t.id !== taskId));
     if (selectedTaskId === taskId) setSelectedTaskId(null);
   };
 
-  const handleUpdateTask = (updated) => {
-    setTasks((prev) => prev.map((task) => task.id === updated.id ? updated : task));
+  const handleUpdateTask = async (updated) => {
+    const res = await fetch(`${API_URL}/api/tasks/${updated.id}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: updated.title, status: updated.status }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    setTasks(prev => prev.map(t => t.id === updated.id ? { ...t, ...apiTaskToLocal(data) } : t));
   };
 
-  const handleAddSubject = ({ name, color }) => {
+  const handleAddSubject = async ({ name, color }) => {
     const trimmed = name.trim();
     if (!trimmed) return null;
-    const id = 's' + Date.now().toString(36);
     const short = trimmed.slice(0, 3).toUpperCase() || 'SUB';
-    const newSubj = { id, name: trimmed, short, color };
-    setSubjects((prev) => [...prev, newSubj]);
+    const res = await fetch(`${API_URL}/api/subjects`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: trimmed, short_name: short, color, user_id: user.id }),
+    });
+    if (!res.ok) return null;
+    const created = await res.json();
+    const newSubj = apiSubjectToLocal(created);
+    setSubjects(prev => [...prev, newSubj]);
     return newSubj;
   };
 
-  const handleUpdateSubject = (id, updates) => {
-    setSubjects((prev) => prev.map((s) => s.id === id ? { ...s, ...updates } : s));
+  const handleUpdateSubject = async (id, updates) => {
+    const res = await fetch(`${API_URL}/api/subjects/${id}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: updates.name,
+        short_name: updates.short,
+        color: updates.color,
+      }),
+    });
+    if (!res.ok) return;
+    setSubjects(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
   };
 
-  const handleDeleteSubject = (id) => {
+  const handleDeleteSubject = async (id) => {
     if (subjects.length <= 1) return;
-    setSubjects((prev) => prev.filter((s) => s.id !== id));
+    const res = await fetch(`${API_URL}/api/subjects/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!res.ok) return;
+    setSubjects(prev => prev.filter(s => s.id !== id));
   };
 
   const onbStart = () => {
@@ -276,6 +373,7 @@ export default function App() {
       {showAdd && (
         <div className="modal-bg" onClick={(e) => e.target === e.currentTarget && setShowAdd(false)}>
           <AddTaskForm
+            key={Date.now()}
             subjects={subjects}
             dayLabels={dayLabels}
             dates={dates}

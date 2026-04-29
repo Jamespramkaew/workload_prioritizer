@@ -400,7 +400,7 @@ curl -s -b cookies.txt http://localhost:8000/api/subjects/1 \
 curl -s -b cookies.txt -X POST http://localhost:8000/api/subjects \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "คณิตศาสตร์",
+    "name": "Mathimatics",
     "short_name": "MATH",
     "color": "#FF5733",
     "sort_order": 0,
@@ -443,17 +443,17 @@ curl -s -b cookies.txt -X DELETE http://localhost:8000/api/subjects/1
 
 | Method | Path | ต้อง Login | คำอธิบาย |
 |--------|------|-----------|----------|
-| POST | `/auth/register` | — | สมัครสมาชิก |
-| POST | `/auth/login` | — | เข้าสู่ระบบ |
+| POST | `/auth/register` |  ✓ | สมัครสมาชิก |
+| POST | `/auth/login` |  ✓ | เข้าสู่ระบบ |
 | POST | `/auth/logout` | ✓ | ออกจากระบบ |
 | GET | `/auth/verify` | ✓ | เช็คสถานะ session |
 | GET | `/api/users/me` | ✓ | ดูข้อมูลตัวเอง |
 | GET | `/api/users/me/settings` | ✓ | ดู settings |
 | PATCH | `/api/users/me/settings` | ✓ | แก้ settings |
-| GET | `/health` | — | เช็คสถานะ server + DB |
-| GET | `/ping` | — | ping |
+| GET | `/health` |  ✓ | เช็คสถานะ server + DB |
+| GET | `/ping` |  ✓ | ping |
 | DELETE | `/api/users/me` | ✓ | [DEBUG] ลบ account ตัวเอง |
-| GET | `/api/tasks` | — | ดู tasks (filter week/status) |
+| GET | `/api/tasks` |  ✓ | ดู tasks (filter week/status) |
 | GET | `/api/tasks/{id}` | — | ดู task เดียว |
 | POST | `/api/tasks` | — | สร้าง task |
 | PATCH | `/api/tasks/{id}` | — | แก้ task |

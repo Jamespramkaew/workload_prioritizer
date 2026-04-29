@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.core.database import get_db
 from app.schemas.task_schema import TaskCreate, TaskUpdate, TaskResponse
@@ -11,18 +11,10 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 @router.get("", response_model=List[TaskResponse])
 def list_tasks(
-    week_offset: int = Query(0, description="Week offset from current week (0 = current week)"),
+    week_offset: Optional[int] = Query(None, description="Filter by week (omit = all tasks)"),
     status: str = Query("active", description="Filter by status: active, pending, completed, all"),
     db: Session = Depends(get_db)
 ):
-    """
-    List tasks filtered by week and status.
-    - week_offset=0: current week
-    - week_offset=1: next week
-    - week_offset=-1: previous week
-    - status="active": pending + in_progress tasks
-    - status="all": all tasks
-    """
     return TaskService.list_tasks(db, week_offset, status)
 
 
