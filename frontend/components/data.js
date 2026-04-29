@@ -164,6 +164,8 @@ export const STRINGS = {
     legend: 'Subjects', weekHigh: 'Heaviest day', none: '—',
     date: 'Date', otherWeek: 'other week',
     addSubject: '+ Add subject', subjectName: 'Subject name', color: 'Color', add: 'Add',
+    manageSubjects: 'Manage subjects', edit: 'Edit', tasksUsing: 'tasks',
+    cannotDeleteSubject: 'Cannot delete. You must complete or delete those tasks first.',
   },
   th: {
     appName: 'Workload Prioritizer', tagline: 'เห็นสัปดาห์ก่อนที่มันจะถล่มคุณ',
@@ -187,5 +189,7 @@ export const STRINGS = {
     legend: 'วิชา', weekHigh: 'วันที่หนักสุด', none: '—',
     date: 'วันที่', otherWeek: 'สัปดาห์อื่น',
     addSubject: '+ เพิ่มวิชา', subjectName: 'ชื่อวิชา', color: 'สี', add: 'เพิ่ม',
+    manageSubjects: 'จัดการวิชา', edit: 'แก้ไข', tasksUsing: 'งาน',
+    cannotDeleteSubject: 'ไม่สามารถลบได้ คุณต้องจบการทำงานหรือลบงานนั้นเท่านั้น',
   },
 };

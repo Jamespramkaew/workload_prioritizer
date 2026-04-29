@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { SUBJECTS, STRINGS, makeInitialTasks, weekDates, dateKey } from '../components/data';
 import WorkloadChart from '../components/Chart';
 import AddTaskForm from '../components/AddTaskForm';
+import SubjectsManager from '../components/SubjectsManager';
 import { TaskList, StatTile, OverloadBanner } from '../components/TaskList';
 import {
   useTweaks, TweaksPanel, TweakSection,
@@ -24,6 +25,7 @@ export default function App() {
   const [allTasks, setTasks] = useState(makeInitialTasks);
   const [subjects, setSubjects] = useState(SUBJECTS);
   const [showAdd, setShowAdd] = useState(false);
+  const [showSubjMgr, setShowSubjMgr] = useState(false);
   const [showOnb, setShowOnb] = useState(true);
   const [onbCap, setOnbCap] = useState(tweaks.capacity);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
@@ -100,6 +102,15 @@ export default function App() {
     const newSubj = { id, name: trimmed, short, color };
     setSubjects((prev) => [...prev, newSubj]);
     return newSubj;
+  };
+
+  const handleUpdateSubject = (id, updates) => {
+    setSubjects((prev) => prev.map((s) => s.id === id ? { ...s, ...updates } : s));
+  };
+
+  const handleDeleteSubject = (id) => {
+    if (subjects.length <= 1) return;
+    setSubjects((prev) => prev.filter((s) => s.id !== id));
   };
 
   const onbStart = () => {
@@ -198,7 +209,12 @@ export default function App() {
         </div>
 
         <div className="legend">
-          <div className="legend-title">{t.legend}</div>
+          <div className="legend-head">
+            <div className="legend-title">{t.legend}</div>
+            <button className="legend-manage" onClick={() => setShowSubjMgr(true)}>
+              {t.manageSubjects}
+            </button>
+          </div>
           <div className="legend-row">
             {subjects.filter((s) => tasks.some((task) => task.subjectId === s.id)).map((s) => (
               <div key={s.id} className="legend-item">
@@ -240,6 +256,19 @@ export default function App() {
             onAdd={handleAddTask}
             onAddSubject={handleAddSubject}
             onCancel={() => setShowAdd(false)}
+            t={t}
+          />
+        </div>
+      )}
+
+      {showSubjMgr && (
+        <div className="modal-bg" onClick={(e) => e.target === e.currentTarget && setShowSubjMgr(false)}>
+          <SubjectsManager
+            subjects={subjects}
+            tasks={allTasks}
+            onUpdate={handleUpdateSubject}
+            onDelete={handleDeleteSubject}
+            onCancel={() => setShowSubjMgr(false)}
             t={t}
           />
         </div>
