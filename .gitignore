@@ -41,3 +41,9 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 .dockerignore
+
+# Node
+node_modules/
+
+#Next
+.next/

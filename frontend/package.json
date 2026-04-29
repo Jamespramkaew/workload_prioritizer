@@ -1,12 +1,11 @@
 {
-  "name": "frontend",
+  "name": "workload-prioritizer",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "next start"
   },
   "dependencies": {
     "axios": "^1.15.0",
@@ -17,12 +16,12 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/axios": "^0.9.36",
-    "@types/node": "^20",
-    "@types/react": "^19",
+    "@types/node": "20.19.39",
+    "@types/react": "19.2.14",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "5.9.3"
   }
 }
