@@ -30,3 +30,6 @@ class UserSettings(Base):
     
     # Relationship
     user = relationship("User", back_populates="user_settings")
+    
+    # Relationship
+    user = relationship("User", back_populates="user_settings")

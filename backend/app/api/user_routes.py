@@ -52,3 +52,12 @@ def delete_me(
     db.commit()
     response.delete_cookie(key=COOKIE_NAME, path="/", secure=True, samesite="none")
     return {"status": "deleted", "email": current_user.email}
+
+
+@router.delete("/all", status_code=status.HTTP_200_OK, tags=["debug"])
+def delete_all_users(db: Session = Depends(get_db)):
+    """[DEBUG] Delete all users and their related data"""
+    count = db.query(User).count()
+    db.query(User).delete()
+    db.commit()
+    return {"status": "deleted", "count": count}
