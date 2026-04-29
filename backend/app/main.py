@@ -10,6 +10,8 @@ from app.core.exceptions import DatabaseError
 import app.models  # ไว้สําหรับการทดสอบการเชื่อมต่อฐานข้อมูลและการสร้างตาราง
 from app.schemas.message_schema import MessageRequest, MessageResponse
 from app.controllers.message_controller import MessageController
+from app.api.task_routes import router as task_router
+from app.api.subject_routes import router as subject_router
 import app.models
 
 # Setup logging
@@ -156,6 +158,10 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 # Initialize Controller
 message_controller = MessageController()
+
+# Include routers
+app.include_router(task_router)
+app.include_router(subject_router)
 
 
 # API Endpoints
