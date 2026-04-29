@@ -93,6 +93,29 @@ input, textarea { font-family: inherit; }
   gap: 24px;
 }
 
+.hdr-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+.hdr-display-name {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.hdr-logout {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.hdr-logout:hover {
+  background: var(--surface-2);
+}
+
 .hdr-brand {
   display: flex;
   align-items: center;
@@ -1395,6 +1418,28 @@ input, textarea { font-family: inherit; }
   outline: none;
   transition: border-color 0.15s, background 0.15s;
 }
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.auth-input-wrap input {
+  width: 100%;
+  padding-right: 40px;
+}
+.auth-eye {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  line-height: 1;
+}
+.auth-eye:hover { color: var(--ink-2); }
 .auth-field input::placeholder { color: var(--ink-3); }
 .auth-field input:focus {
   border-color: var(--ink-2);

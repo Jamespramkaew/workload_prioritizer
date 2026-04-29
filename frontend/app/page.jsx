@@ -1,6 +1,9 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { SUBJECTS, STRINGS, makeInitialTasks, weekDates, dateKey } from '../components/data';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 import WorkloadChart from '../components/Chart';
 import AddTaskForm from '../components/AddTaskForm';
 import SubjectsManager from '../components/SubjectsManager';
@@ -19,6 +22,9 @@ const TWEAK_DEFAULTS = {
 };
 
 export default function App() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const t = STRINGS[tweaks.language] || STRINGS.en;
   const [weekOffset, setWeekOffset] = useState(0);
@@ -39,6 +45,21 @@ export default function App() {
     task.slots.some((s) => weekKeys.includes(s.dateKey)) ||
     weekKeys.includes(task.deadlineKey)
   ), [allTasks, weekKeys]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/auth/verify`, { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => { setUser(data); setAuthReady(true); })
+      .catch(() => router.push('/login'));
+  }, []);
+
+  const logout = async () => {
+    await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+    router.push('/login');
+  };
 
   useEffect(() => {
     document.documentElement.lang = tweaks.language;
@@ -118,6 +139,8 @@ export default function App() {
     setShowOnb(false);
   };
 
+  if (!authReady) return null;
+
   return (
     <div className={`app ${tweaks.density === 'compact' ? 'compact' : ''}`}
          data-theme={tweaks.dark ? 'dark' : 'light'}>
@@ -150,6 +173,10 @@ export default function App() {
               <span className="brand-name">{t.appName}</span>
               <span className="brand-tag">{t.tagline}</span>
             </div>
+          </div>
+          <div className="hdr-user">
+            <span className="hdr-display-name">{user?.display_name}</span>
+            <button className="hdr-logout" onClick={logout}>Sign out</button>
           </div>
           <div className="week-nav">
             {weekOffset !== 0 && (
