@@ -1,8 +1,12 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { SUBJECTS, STRINGS, makeInitialTasks, weekDates, dateKey } from '../components/data';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 import WorkloadChart from '../components/Chart';
 import AddTaskForm from '../components/AddTaskForm';
+import SubjectsManager from '../components/SubjectsManager';
 import { TaskList, StatTile, OverloadBanner } from '../components/TaskList';
 import {
   useTweaks, TweaksPanel, TweakSection,
@@ -18,11 +22,16 @@ const TWEAK_DEFAULTS = {
 };
 
 export default function App() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const t = STRINGS[tweaks.language] || STRINGS.en;
   const [weekOffset, setWeekOffset] = useState(0);
   const [allTasks, setTasks] = useState(makeInitialTasks);
+  const [subjects, setSubjects] = useState(SUBJECTS);
   const [showAdd, setShowAdd] = useState(false);
+  const [showSubjMgr, setShowSubjMgr] = useState(false);
   const [showOnb, setShowOnb] = useState(true);
   const [onbCap, setOnbCap] = useState(tweaks.capacity);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
@@ -36,6 +45,21 @@ export default function App() {
     task.slots.some((s) => weekKeys.includes(s.dateKey)) ||
     weekKeys.includes(task.deadlineKey)
   ), [allTasks, weekKeys]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/auth/verify`, { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => { setUser(data); setAuthReady(true); })
+      .catch(() => router.push('/login'));
+  }, []);
+
+  const logout = async () => {
+    await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+    router.push('/login');
+  };
 
   useEffect(() => {
     document.documentElement.lang = tweaks.language;
@@ -91,10 +115,31 @@ export default function App() {
     setTasks((prev) => prev.map((task) => task.id === updated.id ? updated : task));
   };
 
+  const handleAddSubject = ({ name, color }) => {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    const id = 's' + Date.now().toString(36);
+    const short = trimmed.slice(0, 3).toUpperCase() || 'SUB';
+    const newSubj = { id, name: trimmed, short, color };
+    setSubjects((prev) => [...prev, newSubj]);
+    return newSubj;
+  };
+
+  const handleUpdateSubject = (id, updates) => {
+    setSubjects((prev) => prev.map((s) => s.id === id ? { ...s, ...updates } : s));
+  };
+
+  const handleDeleteSubject = (id) => {
+    if (subjects.length <= 1) return;
+    setSubjects((prev) => prev.filter((s) => s.id !== id));
+  };
+
   const onbStart = () => {
     setTweak('capacity', onbCap);
     setShowOnb(false);
   };
+
+  if (!authReady) return null;
 
   return (
     <div className={`app ${tweaks.density === 'compact' ? 'compact' : ''}`}
@@ -129,16 +174,20 @@ export default function App() {
               <span className="brand-tag">{t.tagline}</span>
             </div>
           </div>
+          <div className="hdr-user">
+            <span className="hdr-display-name">{user?.display_name}</span>
+            <button className="hdr-logout" onClick={logout}>Sign out</button>
+          </div>
           <div className="week-nav">
+            {weekOffset !== 0 && (
+              <button className="week-today" onClick={() => setWeekOffset(0)}>{t.today}</button>
+            )}
             <button className="week-arrow" onClick={() => setWeekOffset((w) => w - 1)} aria-label="prev week">‹</button>
             <div className="week-label">
               <div className="week-range">{fmtRange(dates)}</div>
               <div className="week-sub mono">{t.week} · {dates[0].getDate()}–{dates[6].getDate()}</div>
             </div>
             <button className="week-arrow" onClick={() => setWeekOffset((w) => w + 1)} aria-label="next week">›</button>
-            {weekOffset !== 0 && (
-              <button className="week-today" onClick={() => setWeekOffset(0)}>{t.today}</button>
-            )}
           </div>
         </div>
 
@@ -172,7 +221,7 @@ export default function App() {
           </div>
           <WorkloadChart
             tasks={tasks}
-            subjects={SUBJECTS}
+            subjects={subjects}
             capacity={tweaks.capacity}
             dayLabels={dayLabels}
             dates={dates}
@@ -187,9 +236,14 @@ export default function App() {
         </div>
 
         <div className="legend">
-          <div className="legend-title">{t.legend}</div>
+          <div className="legend-head">
+            <div className="legend-title">{t.legend}</div>
+            <button className="legend-manage" onClick={() => setShowSubjMgr(true)}>
+              {t.manageSubjects}
+            </button>
+          </div>
           <div className="legend-row">
-            {SUBJECTS.filter((s) => tasks.some((task) => task.subjectId === s.id)).map((s) => (
+            {subjects.filter((s) => tasks.some((task) => task.subjectId === s.id)).map((s) => (
               <div key={s.id} className="legend-item">
                 <span className="legend-dot" style={{ background: s.color }} />
                 <span>{s.name}</span>
@@ -207,7 +261,7 @@ export default function App() {
         </div>
         <TaskList
           tasks={tasks}
-          subjects={SUBJECTS}
+          subjects={subjects}
           dayLabels={dayLabels}
           dates={dates}
           capacity={tweaks.capacity}
@@ -222,12 +276,26 @@ export default function App() {
       {showAdd && (
         <div className="modal-bg" onClick={(e) => e.target === e.currentTarget && setShowAdd(false)}>
           <AddTaskForm
-            subjects={SUBJECTS}
+            subjects={subjects}
             dayLabels={dayLabels}
             dates={dates}
             capacity={tweaks.capacity}
             onAdd={handleAddTask}
+            onAddSubject={handleAddSubject}
             onCancel={() => setShowAdd(false)}
+            t={t}
+          />
+        </div>
+      )}
+
+      {showSubjMgr && (
+        <div className="modal-bg" onClick={(e) => e.target === e.currentTarget && setShowSubjMgr(false)}>
+          <SubjectsManager
+            subjects={subjects}
+            tasks={allTasks}
+            onUpdate={handleUpdateSubject}
+            onDelete={handleDeleteSubject}
+            onCancel={() => setShowSubjMgr(false)}
             t={t}
           />
         </div>

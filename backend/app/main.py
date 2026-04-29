@@ -10,8 +10,8 @@ from app.core.exceptions import DatabaseError
 import app.models  # ไว้สําหรับการทดสอบการเชื่อมต่อฐานข้อมูลและการสร้างตาราง
 from app.schemas.message_schema import MessageRequest, MessageResponse
 from app.controllers.message_controller import MessageController
+from app.api import auth_routes
 from app.api.user_routes import router as user_router
-import app.models
 
 # Setup logging
 logging.basicConfig(
@@ -56,6 +56,9 @@ app.add_middleware(
     allow_methods=["*"],              # อนุญาตทุก HTTP methods (GET, POST, PUT, DELETE)
     allow_headers=["*"],              # อนุญาตทุก headers
 )
+
+# Routers
+app.include_router(auth_routes.router)
 
 @app.get("/")
 def read_root():

@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
-import { estimateHours, daysToSplit, splitHours, dateKey, keyToDate, fmtTime, PROTO_TODAY } from './data';
+import { estimateHours, daysToSplit, splitHours, dateKey, keyToDate, fmtTime, PROTO_TODAY, SUBJECT_COLORS } from './data';
 
 function StarRow({ value, onChange, max = 5 }) {
   return (
@@ -46,10 +46,13 @@ function SessionRow({ session, idx, t, onChange, onRemove, canRemove, weekKeys }
   );
 }
 
-export default function AddTaskForm({ subjects, dayLabels, dates, capacity, onAdd, onCancel, t }) {
+export default function AddTaskForm({ subjects, dayLabels, dates, capacity, onAdd, onAddSubject, onCancel, t }) {
   const weekKeys = dates.map(dateKey);
   const [title, setTitle] = useState('');
   const [subjectId, setSubjectId] = useState(subjects[0].id);
+  const [showAddSubj, setShowAddSubj] = useState(false);
+  const [newSubjName, setNewSubjName] = useState('');
+  const [newSubjColor, setNewSubjColor] = useState(SUBJECT_COLORS[0]);
   const [deadlineKey, setDeadlineKey] = useState(weekKeys[4]);
   const [difficulty, setDifficulty] = useState(3);
   const [importance, setImportance] = useState(3);
@@ -102,6 +105,17 @@ export default function AddTaskForm({ subjects, dayLabels, dates, capacity, onAd
     setSessions((prev) => [...prev, { dateKey: deadlineKey, startHour: 20, hours: 1 }]);
   };
 
+  const submitNewSubject = () => {
+    if (!newSubjName.trim() || !onAddSubject) return;
+    const created = onAddSubject({ name: newSubjName, color: newSubjColor });
+    if (created) {
+      setSubjectId(created.id);
+      setNewSubjName('');
+      setNewSubjColor(SUBJECT_COLORS[0]);
+      setShowAddSubj(false);
+    }
+  };
+
   const submit = (e) => {
     e.preventDefault();
     if (!title.trim() || sessions.length === 0) return;
@@ -132,16 +146,54 @@ export default function AddTaskForm({ subjects, dayLabels, dates, capacity, onAd
 
       <div className="at-field">
         <label>{t.subject}</label>
-        <div className="subject-grid">
-          {subjects.map((s) => (
-            <button key={s.id} type="button"
-                    className={`subj-chip ${subjectId === s.id ? 'on' : ''}`}
-                    onClick={() => setSubjectId(s.id)}>
-              <span className="subj-dot" style={{ background: s.color }} />
-              <span className="subj-name">{s.name}</span>
-            </button>
-          ))}
+        <div className="subj-select-row">
+          <span className="subj-color-swatch" style={{ background: subj?.color }} />
+          <select className="at-input subj-select"
+                  value={subjectId}
+                  onChange={(e) => setSubjectId(e.target.value)}>
+            {subjects.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+          <button type="button" className="btn-add-subj"
+                  onClick={() => setShowAddSubj((v) => !v)}>
+            {t.addSubject}
+          </button>
         </div>
+        {showAddSubj && (
+          <div className="new-subj-form">
+            <input className="at-input new-subj-name"
+                   value={newSubjName}
+                   onChange={(e) => setNewSubjName(e.target.value)}
+                   placeholder={t.subjectName}
+                   onKeyDown={(e) => {
+                     if (e.key === 'Enter') {
+                       e.preventDefault();
+                       submitNewSubject();
+                     }
+                   }} />
+            <div className="color-palette">
+              {SUBJECT_COLORS.map((c) => (
+                <button key={c} type="button"
+                        className={`color-swatch ${newSubjColor === c ? 'on' : ''}`}
+                        style={{ background: c }}
+                        onClick={() => setNewSubjColor(c)}
+                        aria-label={t.color} />
+              ))}
+            </div>
+            <div className="new-subj-actions">
+              <button type="button" className="btn-ghost btn-sm"
+                      onClick={() => { setShowAddSubj(false); setNewSubjName(''); }}>
+                {t.cancel}
+              </button>
+              <button type="button" className="btn-primary btn-sm"
+                      onClick={submitNewSubject}
+                      disabled={!newSubjName.trim()}>
+                {t.add}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="at-field">

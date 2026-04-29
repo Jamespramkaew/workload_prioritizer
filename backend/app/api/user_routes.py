@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 from app.schemas.user_schema import UserResponse, UserSettingsResponse, UserSettingsUpdate
-from app.core.security import get_current_user
+from app.api.dependencies import get_current_user, COOKIE_NAME
 from app.core.database import get_db
 from app.models.user import User, UserSettings
 
@@ -40,3 +40,15 @@ def update_my_settings(
     db.commit()
     db.refresh(settings)
     return settings
+
+
+@router.delete("/me", status_code=status.HTTP_200_OK, tags=["debug"])
+def delete_me(
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    db.delete(current_user)
+    db.commit()
+    response.delete_cookie(key=COOKIE_NAME, path="/", secure=True, samesite="none")
+    return {"status": "deleted", "email": current_user.email}
