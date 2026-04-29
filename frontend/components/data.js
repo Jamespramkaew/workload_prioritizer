@@ -8,6 +8,19 @@ export const SUBJECTS = [
   { id: 'math',  name: 'Calculus',      short: 'MTH', color: 'oklch(0.74 0.06 50)'  },
 ];
 
+export const SUBJECT_COLORS = [
+  'oklch(0.72 0.09 250)',
+  'oklch(0.74 0.08 145)',
+  'oklch(0.78 0.10 75)',
+  'oklch(0.72 0.09 25)',
+  'oklch(0.73 0.08 305)',
+  'oklch(0.74 0.07 195)',
+  'oklch(0.74 0.06 50)',
+  'oklch(0.72 0.10 350)',
+  'oklch(0.74 0.07 220)',
+  'oklch(0.74 0.08 110)',
+];
+
 export function estimateHours({ difficulty, importance, comfortable }) {
   let h = 1 + (difficulty - 1) * 0.9;
   h += (importance - 3) * 0.4;
@@ -150,6 +163,7 @@ export const STRINGS = {
     capacityQ: 'How many hours per day can you handle?', start: 'Start planning',
     legend: 'Subjects', weekHigh: 'Heaviest day', none: '—',
     date: 'Date', otherWeek: 'other week',
+    addSubject: '+ Add subject', subjectName: 'Subject name', color: 'Color', add: 'Add',
   },
   th: {
     appName: 'Workload Prioritizer', tagline: 'เห็นสัปดาห์ก่อนที่มันจะถล่มคุณ',
@@ -172,5 +186,6 @@ export const STRINGS = {
     capacityQ: 'รับงานได้กี่ชั่วโมง/วัน?', start: 'เริ่มวางแผน',
     legend: 'วิชา', weekHigh: 'วันที่หนักสุด', none: '—',
     date: 'วันที่', otherWeek: 'สัปดาห์อื่น',
+    addSubject: '+ เพิ่มวิชา', subjectName: 'ชื่อวิชา', color: 'สี', add: 'เพิ่ม',
   },
 };

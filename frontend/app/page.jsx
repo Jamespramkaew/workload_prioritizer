@@ -22,6 +22,7 @@ export default function App() {
   const t = STRINGS[tweaks.language] || STRINGS.en;
   const [weekOffset, setWeekOffset] = useState(0);
   const [allTasks, setTasks] = useState(makeInitialTasks);
+  const [subjects, setSubjects] = useState(SUBJECTS);
   const [showAdd, setShowAdd] = useState(false);
   const [showOnb, setShowOnb] = useState(true);
   const [onbCap, setOnbCap] = useState(tweaks.capacity);
@@ -89,6 +90,16 @@ export default function App() {
 
   const handleUpdateTask = (updated) => {
     setTasks((prev) => prev.map((task) => task.id === updated.id ? updated : task));
+  };
+
+  const handleAddSubject = ({ name, color }) => {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    const id = 's' + Date.now().toString(36);
+    const short = trimmed.slice(0, 3).toUpperCase() || 'SUB';
+    const newSubj = { id, name: trimmed, short, color };
+    setSubjects((prev) => [...prev, newSubj]);
+    return newSubj;
   };
 
   const onbStart = () => {
@@ -172,7 +183,7 @@ export default function App() {
           </div>
           <WorkloadChart
             tasks={tasks}
-            subjects={SUBJECTS}
+            subjects={subjects}
             capacity={tweaks.capacity}
             dayLabels={dayLabels}
             dates={dates}
@@ -189,7 +200,7 @@ export default function App() {
         <div className="legend">
           <div className="legend-title">{t.legend}</div>
           <div className="legend-row">
-            {SUBJECTS.filter((s) => tasks.some((task) => task.subjectId === s.id)).map((s) => (
+            {subjects.filter((s) => tasks.some((task) => task.subjectId === s.id)).map((s) => (
               <div key={s.id} className="legend-item">
                 <span className="legend-dot" style={{ background: s.color }} />
                 <span>{s.name}</span>
@@ -207,7 +218,7 @@ export default function App() {
         </div>
         <TaskList
           tasks={tasks}
-          subjects={SUBJECTS}
+          subjects={subjects}
           dayLabels={dayLabels}
           dates={dates}
           capacity={tweaks.capacity}
@@ -222,11 +233,12 @@ export default function App() {
       {showAdd && (
         <div className="modal-bg" onClick={(e) => e.target === e.currentTarget && setShowAdd(false)}>
           <AddTaskForm
-            subjects={SUBJECTS}
+            subjects={subjects}
             dayLabels={dayLabels}
             dates={dates}
             capacity={tweaks.capacity}
             onAdd={handleAddTask}
+            onAddSubject={handleAddSubject}
             onCancel={() => setShowAdd(false)}
             t={t}
           />
