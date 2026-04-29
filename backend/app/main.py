@@ -10,6 +10,7 @@ from app.core.exceptions import DatabaseError
 import app.models  # ไว้สําหรับการทดสอบการเชื่อมต่อฐานข้อมูลและการสร้างตาราง
 from app.schemas.message_schema import MessageRequest, MessageResponse
 from app.controllers.message_controller import MessageController
+from app.api.user_routes import router as user_router
 import app.models
 
 # Setup logging
@@ -63,6 +64,10 @@ def read_root():
 @app.get("/ping")
 def ping_system():
     return {"status": "success", "detail": "pong!"}
+
+@app.get("/version")
+def get_version():
+    return {"version": "1.0.0", "description": "Workload Prioritizer API"}
 
 
 @app.get("/health")
@@ -153,6 +158,8 @@ async def general_exception_handler(request: Request, exc: Exception):
         }
     )
 
+
+app.include_router(user_router, prefix="/api")
 
 # Initialize Controller
 message_controller = MessageController()
