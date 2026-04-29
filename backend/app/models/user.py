@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from ..core.database import Base
@@ -22,11 +22,14 @@ class User(Base):
 class UserSettings(Base):
     __tablename__ = "user_settings"
     
-    user_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True, index=True)
     chart_type = Column(Text, nullable=False, default="bar")
     capacity = Column(Integer, nullable=False, default=8)
     density = Column(Text, nullable=False, default="medium")
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationship
+    user = relationship("User", back_populates="user_settings")
     
     # Relationship
     user = relationship("User", back_populates="user_settings")
