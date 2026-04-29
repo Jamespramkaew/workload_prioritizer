@@ -82,12 +82,10 @@ export default function WorkloadChart({
       }
     };
     const up = () => {
-      setDrag((d) => {
-        if (d && hoverDay != null && hoverDay !== d.fromDay) {
-          onMoveSlot(d.taskId, d.slotIdx, weekKeys[hoverDay]);
-        }
-        return null;
-      });
+      if (drag && hoverDay != null && hoverDay !== drag.fromDay) {
+        onMoveSlot(drag.taskId, drag.slotIdx, weekKeys[hoverDay]);
+      }
+      setDrag(null);
       setHoverDay(null);
     };
     window.addEventListener('mousemove', move);
