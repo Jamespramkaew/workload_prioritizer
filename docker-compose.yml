@@ -3,19 +3,6 @@ version: '3.8'
 services:
 
   # frontend
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: workload_frontend
-    ports:
-      - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: http://backend:8000
-    depends_on:
-      - backend
-    networks:
-      - app-network
 
   # Backend
   backend:
