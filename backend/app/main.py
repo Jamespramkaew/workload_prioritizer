@@ -10,7 +10,8 @@ from app.core.exceptions import DatabaseError
 import app.models  # ไว้สําหรับการทดสอบการเชื่อมต่อฐานข้อมูลและการสร้างตาราง
 from app.schemas.message_schema import MessageRequest, MessageResponse
 from app.controllers.message_controller import MessageController
-import app.models
+from app.api import auth_routes
+from app.api.user_routes import router as user_router
 
 # Setup logging
 logging.basicConfig(
@@ -56,6 +57,9 @@ app.add_middleware(
     allow_headers=["*"],              # อนุญาตทุก headers
 )
 
+# Routers
+app.include_router(auth_routes.router)
+
 @app.get("/")
 def read_root():
     return {"message": "Hello from Workload Prioritizer Backend!"}
@@ -63,6 +67,10 @@ def read_root():
 @app.get("/ping")
 def ping_system():
     return {"status": "success", "detail": "pong!"}
+
+@app.get("/version")
+def get_version():
+    return {"version": "1.0.0", "description": "Workload Prioritizer API"}
 
 
 @app.get("/health")
@@ -153,6 +161,8 @@ async def general_exception_handler(request: Request, exc: Exception):
         }
     )
 
+
+app.include_router(user_router, prefix="/api")
 
 # Initialize Controller
 message_controller = MessageController()
