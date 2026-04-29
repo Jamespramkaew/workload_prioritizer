@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from datetime import datetime
-
+from typing import Optional
 
 class UserRegister(BaseModel):
     email: EmailStr
@@ -20,6 +20,7 @@ class UserLogin(BaseModel):
     password: str
 
 
+
 class UserResponse(BaseModel):
     id: int
     email: str
@@ -33,3 +34,22 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    email: Optional[str]
+    display_name: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class UserSettingsResponse(BaseModel):
+    chart_type: str
+    capacity: int
+    density: str
+
+    model_config = {"from_attributes": True}
+
+
+class UserSettingsUpdate(BaseModel):
+    chart_type: Optional[str] = None
+    capacity: Optional[int] = None
+    density: Optional[str] = None

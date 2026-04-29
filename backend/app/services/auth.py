@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from app.models.user import User
+from app.models.user import User, UserSettings
 from app.core.security import hash_password, verify_password
 
 
@@ -20,6 +20,8 @@ def register_user(db: Session, email: str, password: str, display_name: str) -> 
         display_name=display_name,
     )
     db.add(user)
+    db.flush()
+    db.add(UserSettings(user_id=user.id))
     db.commit()
     db.refresh(user)
     return user
