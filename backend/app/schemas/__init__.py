@@ -6,7 +6,6 @@ from .task_schema import (
     TaskCreate,
     TaskUpdate,
     TaskResponse,
-    TaskListResponse
 )
 
 __all__ = [
@@ -18,5 +17,4 @@ __all__ = [
     "TaskCreate",
     "TaskUpdate",
     "TaskResponse",
-    "TaskListResponse"
 ]

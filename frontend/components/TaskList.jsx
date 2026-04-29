@@ -2,7 +2,8 @@
 import { dateKey, keyToDate, fmtTime } from './data';
 
 export function TaskList({ tasks, subjects, dayLabels, dates, capacity, t,
-                    onDeleteTask, onSelectTask, selectedTaskId, onUpdateTask }) {
+                    onDeleteTask, onSelectTask, selectedTaskId, onUpdateTask,
+                    onAddSlot, onUpdateSlot, onDeleteSlot }) {
   if (tasks.length === 0) {
     return <div className="task-empty">{t.empty}</div>;
   }
@@ -24,22 +25,9 @@ export function TaskList({ tasks, subjects, dayLabels, dates, capacity, t,
     return `${d.getMonth() + 1}/${d.getDate()}`;
   };
 
-  const updateSlot = (task, slotIdx, patch) => {
-    const slots = task.slots.map((s, i) => i === slotIdx ? { ...s, ...patch } : s);
-    const totalHours = slots.reduce((a, s) => a + s.hours, 0);
-    onUpdateTask({ ...task, slots, hours: totalHours });
-  };
-  const addSlot = (task) => {
-    const slots = [...task.slots, { dateKey: task.deadlineKey || weekKeys[0], startHour: 19, hours: 1 }];
-    const totalHours = slots.reduce((a, s) => a + s.hours, 0);
-    onUpdateTask({ ...task, slots, hours: totalHours });
-  };
-  const removeSlot = (task, slotIdx) => {
-    if (task.slots.length <= 1) return;
-    const slots = task.slots.filter((_, i) => i !== slotIdx);
-    const totalHours = slots.reduce((a, s) => a + s.hours, 0);
-    onUpdateTask({ ...task, slots, hours: totalHours });
-  };
+  const updateSlot = (task, slotIdx, patch) => onUpdateSlot(task.id, slotIdx, patch);
+  const addSlot = (task) => onAddSlot(task.id, { dateKey: task.deadlineKey || weekKeys[0], startHour: 19, hours: 1 });
+  const removeSlot = (task, slotIdx) => onDeleteSlot(task.id, slotIdx);
   const updateTitle = (task, title) => onUpdateTask({ ...task, title });
 
   return (
