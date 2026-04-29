@@ -235,7 +235,26 @@ curl -s -c cookies.txt -b cookies.txt -X DELETE http://localhost:8000/api/users/
 
 ---
 
-## 10. ดู Tasks ทั้งหมด
+## 10. [DEBUG] ลบ Users ทั้งหมด
+
+> ไม่ต้อง login — ลบ users ทุกคนพร้อม cascade (settings, tasks, subjects)
+
+```bash
+curl -s -X DELETE http://localhost:8000/api/users/all \
+  | python3 -m json.tool
+```
+
+**ผลที่ได้ (200):**
+```json
+{
+    "status": "deleted",
+    "count": 3
+}
+```
+
+---
+
+## 12. ดู Tasks ทั้งหมด
 
 ```bash
 curl -s -b cookies.txt "http://localhost:8000/api/tasks?week_offset=0&status=active" \
