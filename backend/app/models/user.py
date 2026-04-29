@@ -23,11 +23,9 @@ class UserSettings(Base):
     __tablename__ = "user_settings"
     
     user_id = Column(Integer, primary_key=True, index=True)
-    language = Column(Text, nullable=False, default="en")
     chart_type = Column(Text, nullable=False, default="bar")
     capacity = Column(Integer, nullable=False, default=8)
     density = Column(Text, nullable=False, default="medium")
-    dark_mode = Column(Boolean, nullable=False, default=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationship
