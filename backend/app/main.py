@@ -15,6 +15,7 @@ from app.api.user_routes import router as user_router
 from app.api.task_routes import router as task_router
 from app.api.subject_routes import router as subject_router
 import app.models
+from app.api import task_slot_routes
 
 # Setup logging
 logging.basicConfig(
@@ -62,6 +63,8 @@ app.add_middleware(
 
 # Routers
 app.include_router(auth_routes.router)
+# Register API Routes
+app.include_router(task_slot_routes.router, prefix="/api", tags=["Task Slots"])
 
 @app.get("/")
 def read_root():

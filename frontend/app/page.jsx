@@ -159,12 +159,112 @@ export default function App() {
     setShowAdd(false);
   };
 
-  const handleMoveSlot = (taskId, slotIdx, newDateKey) => {
-    setTasks((prev) => prev.map((task) => {
-      if (task.id !== taskId) return task;
-      const slots = task.slots.map((s, i) => i === slotIdx ? { ...s, dateKey: newDateKey } : s);
-      return { ...task, slots };
+  const handleMoveSlot = async (taskId, slotIdx, newDateKey) => {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+    const slot = task.slots[slotIdx];
+    if (!slot) return;
+
+    // optimistic update
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      return { ...t, slots: t.slots.map((s, i) => i === slotIdx ? { ...s, dateKey: newDateKey } : s) };
     }));
+
+    const res = await fetch(`${API_URL}/api/tasks/${taskId}/slots/${slot.id}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slot_date: newDateKey }),
+    });
+
+    // revert on fail
+    if (!res.ok) {
+      setTasks(prev => prev.map(t => {
+        if (t.id !== taskId) return t;
+        return { ...t, slots: t.slots.map((s, i) => i === slotIdx ? { ...s, dateKey: slot.dateKey } : s) };
+      }));
+    }
+  };
+
+  const handleAddSlot = async (taskId, slotData) => {
+    const res = await fetch(`${API_URL}/api/tasks/${taskId}/slots`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slot_date: slotData.dateKey,
+        start_hour: slotData.startHour,
+        hours: slotData.hours,
+      }),
+    });
+    if (!res.ok) return;
+    const created = await res.json();
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      const newSlot = { id: created.id, dateKey: created.slot_date, startHour: Number(created.start_hour), hours: Number(created.hours) };
+      const slots = [...t.slots, newSlot];
+      return { ...t, slots, hours: slots.reduce((a, s) => a + s.hours, 0) };
+    }));
+  };
+
+  const handleUpdateSlot = async (taskId, slotIdx, patch) => {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+    const slot = task.slots[slotIdx];
+    if (!slot) return;
+
+    const apiPatch = {};
+    if (patch.dateKey !== undefined) apiPatch.slot_date = patch.dateKey;
+    if (patch.startHour !== undefined) apiPatch.start_hour = patch.startHour;
+    if (patch.hours !== undefined) apiPatch.hours = patch.hours;
+
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      const slots = t.slots.map((s, i) => i === slotIdx ? { ...s, ...patch } : s);
+      return { ...t, slots, hours: slots.reduce((a, s) => a + s.hours, 0) };
+    }));
+
+    const res = await fetch(`${API_URL}/api/tasks/${taskId}/slots/${slot.id}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiPatch),
+    });
+
+    if (!res.ok) {
+      setTasks(prev => prev.map(t => {
+        if (t.id !== taskId) return t;
+        const slots = t.slots.map((s, i) => i === slotIdx ? slot : s);
+        return { ...t, slots, hours: slots.reduce((a, s) => a + s.hours, 0) };
+      }));
+    }
+  };
+
+  const handleDeleteSlot = async (taskId, slotIdx) => {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task || task.slots.length <= 1) return;
+    const slot = task.slots[slotIdx];
+    if (!slot) return;
+
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      const slots = t.slots.filter((_, i) => i !== slotIdx);
+      return { ...t, slots, hours: slots.reduce((a, s) => a + s.hours, 0) };
+    }));
+
+    const res = await fetch(`${API_URL}/api/tasks/${taskId}/slots/${slot.id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!res.ok) {
+      setTasks(prev => prev.map(t => {
+        if (t.id !== taskId) return t;
+        const slots = [...t.slots.slice(0, slotIdx), slot, ...t.slots.slice(slotIdx)];
+        return { ...t, slots, hours: slots.reduce((a, s) => a + s.hours, 0) };
+      }));
+    }
   };
 
   const handleDeleteTask = async (taskId) => {
@@ -365,6 +465,9 @@ export default function App() {
           t={t}
           onDeleteTask={handleDeleteTask}
           onUpdateTask={handleUpdateTask}
+          onAddSlot={handleAddSlot}
+          onUpdateSlot={handleUpdateSlot}
+          onDeleteSlot={handleDeleteSlot}
           onSelectTask={(id) => setSelectedTaskId(id === selectedTaskId ? null : id)}
           selectedTaskId={selectedTaskId}
         />

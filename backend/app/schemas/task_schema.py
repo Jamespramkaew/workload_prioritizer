@@ -1,9 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date, datetime
 
 
-# TaskSlot Schema
 class TaskSlotBase(BaseModel):
     slot_date: Optional[date] = None
     start_hour: Optional[float] = None
@@ -12,6 +11,12 @@ class TaskSlotBase(BaseModel):
 
 class TaskSlotCreate(TaskSlotBase):
     pass
+
+
+class TaskSlotUpdate(BaseModel):
+    slot_date: Optional[date] = None
+    start_hour: Optional[float] = None
+    hours: Optional[float] = None
 
 
 class TaskSlotResponse(TaskSlotBase):
@@ -23,7 +28,6 @@ class TaskSlotResponse(TaskSlotBase):
         from_attributes = True
 
 
-# Task Schema
 class TaskBase(BaseModel):
     title: Optional[str] = None
     deadline_date: Optional[date] = None

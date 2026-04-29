@@ -439,6 +439,63 @@ curl -s -b cookies.txt -X DELETE http://localhost:8000/api/subjects/1
 
 ---
 
+## 20. เพิ่ม Slot ให้ Task
+
+```bash
+curl -s -b cookies.txt -X POST http://localhost:8000/api/tasks/1/slots \
+  -H "Content-Type: application/json" \
+  -d '{"slot_date":"2026-05-06","start_hour":19.0,"hours":2.0}' \
+  | python3 -m json.tool
+```
+
+**ผลที่ได้ (201):**
+```json
+{
+    "slot_date": "2026-05-06",
+    "start_hour": 19.0,
+    "hours": 2.0,
+    "id": 5,
+    "task_id": 1,
+    "created_at": "2026-04-30T12:00:00"
+}
+```
+
+---
+
+## 21. แก้ Slot (เปลี่ยนวัน/เวลา)
+
+> ส่งเฉพาะ field ที่อยากเปลี่ยน
+
+```bash
+curl -s -b cookies.txt -X PATCH http://localhost:8000/api/tasks/1/slots/5 \
+  -H "Content-Type: application/json" \
+  -d '{"slot_date":"2026-05-07","start_hour":20.0}' \
+  | python3 -m json.tool
+```
+
+**field ที่แก้ได้:** `slot_date`, `start_hour`, `hours`
+
+---
+
+## 22. ลบ Slot
+
+```bash
+curl -s -b cookies.txt -X DELETE http://localhost:8000/api/tasks/1/slots/5
+```
+
+**ผลที่ได้ (204):** — ไม่มี body
+
+**ผลที่ได้ถ้าเหลือ slot เดียว (400):**
+```json
+{
+    "status": "error",
+    "code": 400,
+    "message": "Cannot delete the last slot. A task must have at least one slot."
+}
+```
+
+---
+
 ## สรุป Endpoints ทั้งหมด
 
 | Method | Path | ต้อง Login | คำอธิบาย |
@@ -463,3 +520,6 @@ curl -s -b cookies.txt -X DELETE http://localhost:8000/api/subjects/1
 | POST | `/api/subjects` | — | สร้าง subject |
 | PATCH | `/api/subjects/{id}` | — | แก้ subject |
 | DELETE | `/api/subjects/{id}` | — | ลบ subject |
+| POST | `/api/tasks/{id}/slots` | — | เพิ่ม slot ให้ task |
+| PATCH | `/api/tasks/{id}/slots/{slot_id}` | — | แก้ slot (วัน/เวลา) |
+| DELETE | `/api/tasks/{id}/slots/{slot_id}` | — | ลบ slot (ต้องเหลือ ≥ 1) |
