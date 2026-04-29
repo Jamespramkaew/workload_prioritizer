@@ -11,6 +11,13 @@ env/
 ENV/
 .venv
 
+venv/
+.venv/
+env/
+bin/
+lib/
+include/
+
 # Environment variables
 .env
 .env.local
