@@ -17,6 +17,7 @@ class Task(Base):
     comfortable = Column(Boolean, nullable=True)
     estimated_hours = Column(Numeric(4, 1), nullable=True)
     status = Column(Text, nullable=False, default="pending")
+    google_event_ids = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

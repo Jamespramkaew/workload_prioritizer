@@ -1,10 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from datetime import datetime
-from typing import Optional
-
-class UserResponse(BaseModel):
-    id: int
-
+from typing import Optional, Any
 
 
 class UserRegister(BaseModel):
@@ -25,12 +21,25 @@ class UserLogin(BaseModel):
     password: str
 
 
-
 class UserResponse(BaseModel):
     id: int
     email: str
     display_name: str
     created_at: datetime
+    google_connected: bool = False
+
+    @model_validator(mode='before')
+    @classmethod
+    def compute_fields(cls, data: Any) -> Any:
+        if hasattr(data, 'google_access_token'):
+            return {
+                'id': data.id,
+                'email': data.email,
+                'display_name': data.display_name,
+                'created_at': data.created_at,
+                'google_connected': bool(data.google_access_token),
+            }
+        return data
 
     class Config:
         from_attributes = True
