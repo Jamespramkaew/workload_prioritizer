@@ -32,6 +32,7 @@ function apiTaskToLocal(task) {
     comfortable: task.comfortable,
     hours: Number(task.estimated_hours),
     status: task.status,
+    googleSynced: !!task.google_event_ids,
     slots: (task.task_slots || []).map(s => ({
       id: s.id,
       dateKey: s.slot_date,
@@ -59,6 +60,7 @@ export default function App() {
   const [showOnb, setShowOnb] = useState(true);
   const [onbCap, setOnbCap] = useState(tweaks.capacity);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [showGCalBanner, setShowGCalBanner] = useState(false);
 
   const dates = useMemo(() => weekDates(weekOffset), [weekOffset]);
   const todayDate = useMemo(() => new Date(2026, 3, 27), []);
@@ -93,6 +95,7 @@ export default function App() {
       .then(data => {
         setUser(data);
         setAuthReady(true);
+        setShowGCalBanner(!data.google_connected);
         fetchSubjects(data.id);
         fetchTasks();
       })
@@ -267,6 +270,20 @@ export default function App() {
     }
   };
 
+  const handleSyncTask = async (taskId) => {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+    const method = task.googleSynced ? 'DELETE' : 'POST';
+    const res = await fetch(`${API_URL}/api/tasks/${taskId}/sync-calendar`, {
+      method,
+      credentials: 'include',
+    });
+    if (!res.ok) return;
+    setTasks(prev => prev.map(t =>
+      t.id === taskId ? { ...t, googleSynced: !t.googleSynced } : t
+    ));
+  };
+
   const handleDeleteTask = async (taskId) => {
     const res = await fetch(`${API_URL}/api/tasks/${taskId}`, {
       method: 'DELETE',
@@ -388,6 +405,29 @@ export default function App() {
           </div>
         </div>
 
+        {showGCalBanner && (
+          <div className="gcal-banner">
+            <span className="gcal-banner-text">
+               Connect Google Calendar to sync your tasks
+            </span>
+            <div className="gcal-banner-actions">
+              <button
+                className="gcal-banner-connect"
+                onClick={() => { window.location.href = `${API_URL}/auth/google/login`; }}
+              >
+                Connect
+              </button>
+              <button
+                className="gcal-banner-close"
+                onClick={() => setShowGCalBanner(false)}
+                aria-label="Dismiss"
+              >
+                Cancle
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="stats">
           <StatTile label={t.totalThisWeek} value={total} unit={t.hours} />
           <StatTile label={t.tasksThisWeek} value={tasks.length} />
@@ -470,6 +510,8 @@ export default function App() {
           onDeleteSlot={handleDeleteSlot}
           onSelectTask={(id) => setSelectedTaskId(id === selectedTaskId ? null : id)}
           selectedTaskId={selectedTaskId}
+          googleConnected={user?.google_connected}
+          onSyncTask={handleSyncTask}
         />
       </div>
 

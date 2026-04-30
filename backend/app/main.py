@@ -16,6 +16,7 @@ from app.api.task_routes import router as task_router
 from app.api.subject_routes import router as subject_router
 import app.models
 from app.api import task_slot_routes
+from app.api import google_cal_routes
 
 # Setup logging
 logging.basicConfig(
@@ -176,6 +177,7 @@ message_controller = MessageController()
 # Include routers
 app.include_router(task_router, prefix="/api")
 app.include_router(subject_router, prefix="/api")
+app.include_router(google_cal_routes.router)
 
 
 # API Endpoints

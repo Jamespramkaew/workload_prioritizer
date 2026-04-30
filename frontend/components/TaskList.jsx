@@ -3,7 +3,8 @@ import { dateKey, keyToDate, fmtTime } from './data';
 
 export function TaskList({ tasks, subjects, dayLabels, dates, capacity, t,
                     onDeleteTask, onSelectTask, selectedTaskId, onUpdateTask,
-                    onAddSlot, onUpdateSlot, onDeleteSlot }) {
+                    onAddSlot, onUpdateSlot, onDeleteSlot,
+                    googleConnected, onSyncTask }) {
   if (tasks.length === 0) {
     return <div className="task-empty">{t.empty}</div>;
   }
@@ -133,6 +134,15 @@ export function TaskList({ tasks, subjects, dayLabels, dates, capacity, t,
                       {t.estimated}: <span className="mono">{task.hours}{t.hours}</span>
                     </span>
                   </div>
+                  {googleConnected && (
+                    <button
+                      type="button"
+                      className={`te-sync ${task.googleSynced ? 'synced' : ''}`}
+                      onClick={() => onSyncTask(task.id)}
+                    >
+                      {task.googleSynced ? '📅 Synced to Calendar ✓' : '📅 Sync to Calendar'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
