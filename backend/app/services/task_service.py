@@ -7,14 +7,19 @@ from app.schemas.task_schema import TaskCreate, TaskUpdate
 
 
 class TaskService:
-    
-    @staticmethod
+    def __init__(self, db: Session):
+        self._db = db
+
+    @property
+    def db(self) -> Session:
+        return self._db
+
     def list_tasks(
-        db: Session,
+        self,
         week_offset: Optional[int] = None,
         status: str = "active"
     ) -> List[Task]:
-        query = db.query(Task)
+        query = self._db.query(Task)
 
         if status == "active":
             query = query.filter(Task.status.in_(["pending", "in_progress"]))
@@ -28,15 +33,11 @@ class TaskService:
             query = query.filter(Task.deadline_date >= week_start, Task.deadline_date <= week_end)
 
         return query.order_by(Task.deadline_date, Task.importance.desc()).all()
-    
-    @staticmethod
-    def get_task(db: Session, task_id: int) -> Optional[Task]:
-        """Get a single task by ID"""
-        return db.query(Task).filter(Task.id == task_id).first()
-    
-    @staticmethod
-    def create_task(db: Session, task_data: TaskCreate) -> Task:
-        """Create a new task with optional slots"""
+
+    def get_task(self, task_id: int) -> Optional[Task]:
+        return self._db.query(Task).filter(Task.id == task_id).first()
+
+    def create_task(self, task_data: TaskCreate) -> Task:
         task = Task(
             user_id=task_data.user_id,
             subject_id=task_data.subject_id,
@@ -48,9 +49,9 @@ class TaskService:
             estimated_hours=task_data.estimated_hours,
             status=task_data.status
         )
-        db.add(task)
-        db.flush()
-        
+        self._db.add(task)
+        self._db.flush()
+
         if task_data.slots:
             for slot_data in task_data.slots:
                 slot = TaskSlot(
@@ -59,35 +60,31 @@ class TaskService:
                     start_hour=slot_data.start_hour,
                     hours=slot_data.hours
                 )
-                db.add(slot)
-        
-        db.commit()
-        db.refresh(task)
+                self._db.add(slot)
+
+        self._db.commit()
+        self._db.refresh(task)
         return task
-    
-    @staticmethod
-    def update_task(db: Session, task_id: int, task_data: TaskUpdate) -> Optional[Task]:
-        """Update a task (title, status)"""
-        task = db.query(Task).filter(Task.id == task_id).first()
+
+    def update_task(self, task_id: int, task_data: TaskUpdate) -> Optional[Task]:
+        task = self._db.query(Task).filter(Task.id == task_id).first()
         if not task:
             return None
-        
+
         if task_data.title is not None:
             task.title = task_data.title
         if task_data.status is not None:
             task.status = task_data.status
-        
-        db.commit()
-        db.refresh(task)
+
+        self._db.commit()
+        self._db.refresh(task)
         return task
-    
-    @staticmethod
-    def delete_task(db: Session, task_id: int) -> bool:
-        """Delete a task"""
-        task = db.query(Task).filter(Task.id == task_id).first()
+
+    def delete_task(self, task_id: int) -> bool:
+        task = self._db.query(Task).filter(Task.id == task_id).first()
         if not task:
             return False
-        
-        db.delete(task)
-        db.commit()
+
+        self._db.delete(task)
+        self._db.commit()
         return True

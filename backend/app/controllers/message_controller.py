@@ -3,19 +3,12 @@ from app.services.message import MessageService
 
 
 class MessageController:
-    """Controller for handling message-related endpoints"""
-    
     def __init__(self):
-        self.service = MessageService()
-    
+        self._service = MessageService()
+
+    @property
+    def service(self) -> MessageService:
+        return self._service
+
     def echo_message(self, request: MessageRequest) -> MessageResponse:
-        """
-        Handle echo message request
-        
-        Args:
-            request: MessageRequest containing the message
-            
-        Returns:
-            MessageResponse with the processed message
-        """
-        return self.service.process_message(request.message)
+        return self._service.process_message(request.message)

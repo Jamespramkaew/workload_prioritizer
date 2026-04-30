@@ -15,13 +15,12 @@ def list_tasks(
     status: str = Query("active", description="Filter by status: active, pending, completed, all"),
     db: Session = Depends(get_db)
 ):
-    return TaskService.list_tasks(db, week_offset, status)
+    return TaskService(db).list_tasks(week_offset, status)
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
 def get_task(task_id: int, db: Session = Depends(get_db)):
-    """Get a single task by ID"""
-    task = TaskService.get_task(db, task_id)
+    task = TaskService(db).get_task(task_id)
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -32,14 +31,12 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(task_data: TaskCreate, db: Session = Depends(get_db)):
-    """Create a new task with optional slots"""
-    return TaskService.create_task(db, task_data)
+    return TaskService(db).create_task(task_data)
 
 
 @router.patch("/{task_id}", response_model=TaskResponse)
 def update_task(task_id: int, task_data: TaskUpdate, db: Session = Depends(get_db)):
-    """Update a task (title, status)"""
-    task = TaskService.update_task(db, task_id, task_data)
+    task = TaskService(db).update_task(task_id, task_data)
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -50,8 +47,7 @@ def update_task(task_id: int, task_data: TaskUpdate, db: Session = Depends(get_d
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_task(task_id: int, db: Session = Depends(get_db)):
-    """Delete a task"""
-    success = TaskService.delete_task(db, task_id)
+    success = TaskService(db).delete_task(task_id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
