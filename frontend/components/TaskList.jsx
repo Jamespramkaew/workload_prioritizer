@@ -140,7 +140,7 @@ export function TaskList({ tasks, subjects, dayLabels, dates, capacity, t,
                       className={`te-sync ${task.googleSynced ? 'synced' : ''}`}
                       onClick={() => onSyncTask(task.id)}
                     >
-                      {task.googleSynced ? '📅 Synced to Calendar ✓' : '📅 Sync to Calendar'}
+                      {task.googleSynced ? 'Synced to Calendar ✓' : 'Sync to Calendar'}
                     </button>
                   )}
                 </div>

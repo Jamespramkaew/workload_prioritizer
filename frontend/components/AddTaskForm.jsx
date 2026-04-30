@@ -82,9 +82,10 @@ export default function AddTaskForm({ subjects, dayLabels, dates, capacity, onAd
     }
     const chosen = candidates.slice(0, nDays);
     while (chosen.length < nDays) chosen.push(deadlineKey);
+    const defaultHours = [19, 13, 9, 20, 15, 10];
     setSessions(split.map((h, i) => ({
       dateKey: chosen[i],
-      startHour: 19,
+      startHour: defaultHours[i % defaultHours.length],
       hours: h,
     })));
   }, [mode, autoHours, deadlineKey]);
