@@ -1,9 +1,9 @@
 import secrets
 import hashlib
 import base64
-from datetime import timezone
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
+from google.auth.transport.requests import Request as GoogleRequest
 from googleapiclient.discovery import build
 from app.core.config import settings
 
@@ -60,16 +60,15 @@ def exchange_code(code: str, state: str) -> tuple[str, dict]:
 
 
 def _build_service(access_token: str, refresh_token: str, expiry):
-    if expiry is not None and expiry.tzinfo is None:
-        expiry = expiry.replace(tzinfo=timezone.utc)
     creds = Credentials(
         token=access_token,
         refresh_token=refresh_token,
         token_uri="https://oauth2.googleapis.com/token",
         client_id=settings.GOOGLE_CLIENT_ID,
         client_secret=settings.GOOGLE_CLIENT_SECRET,
-        expiry=expiry,
     )
+    # Force refresh ทุกครั้ง — ข้ามปัญหา timezone comparison ใน library
+    creds.refresh(GoogleRequest())
     return build("calendar", "v3", credentials=creds)
 
 

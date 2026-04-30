@@ -154,6 +154,20 @@ async def database_exception_handler(request: Request, exc: DatabaseError):
         }
     )
 
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+def _cors_headers(request: Request) -> dict:
+    origin = request.headers.get("origin", "")
+    if origin in ALLOWED_ORIGINS:
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        }
+    return {}
+
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """Handle all other exceptions"""
@@ -165,7 +179,8 @@ async def general_exception_handler(request: Request, exc: Exception):
             "code": 500,
             "message": "Internal server error",
             "path": str(request.url.path)
-        }
+        },
+        headers=_cors_headers(request),
     )
 
 
