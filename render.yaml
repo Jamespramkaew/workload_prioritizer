@@ -1,28 +1,22 @@
 databases:
-  # แปลงจาก service "db"
   - name: workload-db
     databaseName: workload_db
-    user: postgres
-    plan: free       # หรือเปลี่ยนเป็น starter/standard ตาม plan ที่ใช้
-    region: singapore # แนะนำให้ใช้ region เดียวกันทั้งหมด (เช่น singapore)
+    plan: free       
+    region: singapore 
 
 services:
-  # แปลงจาก service "backend"
   - type: web
     name: workload-backend
     env: docker
     plan: free
     region: singapore
-    rootDir: backend  # ชี้ไปยังโฟลเดอร์ backend (เทียบเท่า context: ./backend)
+    rootDir: backend  
     
     envVars:
-      # เชื่อมต่อกับ Database ที่สร้างด้านบนโดยอัตโนมัติ (ดึง Connection String มาให้เลย)
       - key: DATABASE_URL
         fromDatabase:
           name: workload-db
           property: connectionString
           
-      # ส่วนของ SECRET_KEY จะตั้งค่า sync: false เพื่อความปลอดภัย
-      # Render จะไม่เก็บค่านี้ในโค้ด แต่คุณต้องไปกรอกเองในหน้า Dashboard หลัง Deploy
       - key: SECRET_KEY
         sync: false
