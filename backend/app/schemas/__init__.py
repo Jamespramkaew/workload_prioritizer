@@ -1,4 +1,3 @@
-from .message_schema import MessageRequest, MessageResponse
 from .task_schema import (
     TaskSlotCreate,
     TaskSlotUpdate,

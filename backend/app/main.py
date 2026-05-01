@@ -8,8 +8,6 @@ import time
 from app.core.database import test_db_connection, create_tables
 from app.core.exceptions import DatabaseError
 import app.models  # ไว้สําหรับการทดสอบการเชื่อมต่อฐานข้อมูลและการสร้างตาราง
-from app.schemas.message_schema import MessageRequest, MessageResponse
-from app.controllers.message_controller import MessageController
 from app.api import auth_routes
 from app.api.user_routes import router as user_router
 from app.api.task_routes import router as task_router
@@ -193,19 +191,9 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 app.include_router(user_router, prefix="/api")
 
-# Initialize Controller
-message_controller = MessageController()
-
 # Include routers
 app.include_router(task_router, prefix="/api")
 app.include_router(subject_router, prefix="/api")
 app.include_router(google_cal_routes.router)
 
 
-# API Endpoints
-@app.post("/api/echo", response_model=MessageResponse)
-def echo_message(request_body: MessageRequest):
-    """
-    Echo API endpoint that receives a message and returns it as a result
-    """
-    return message_controller.echo_message(request_body)
