@@ -9,7 +9,6 @@ from app.core.database import test_db_connection, create_tables
 from app.core.exceptions import DatabaseError
 import app.models  # ไว้สําหรับการทดสอบการเชื่อมต่อฐานข้อมูลและการสร้างตาราง
 from app.schemas.message_schema import MessageRequest, MessageResponse
-from app.controllers.message_controller import MessageController
 from app.api import auth_routes
 from app.api.user_routes import router as user_router
 from app.api.task_routes import router as task_router
