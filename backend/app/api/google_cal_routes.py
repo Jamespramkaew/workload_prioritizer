@@ -1,18 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
+import logging
+
 from app.core.config import settings
 from app.core.exceptions import DatabaseError
-
-logger = logging.getLogger(__name__)
-
-FRONTEND_URL = "https://workload-prioritizer.vercel.app"
-from sqlalchemy.orm import Session
-
 from app.core.database import get_db
 from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.models.task import Task
 from app.services.google_cal import GoogleCalendarService
+
+logger = logging.getLogger(__name__)
+
+FRONTEND_URL = "https://workload-prioritizer.vercel.app"
 from app.middleware.rate_limit import limiter, RateLimits
 
 router = APIRouter(tags=["Google Calendar"])

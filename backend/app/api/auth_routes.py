@@ -1,14 +1,16 @@
 from fastapi import APIRouter, Depends, Response, status, Request
 from sqlalchemy.orm import Session
+import logging
+
 from app.core.database import get_db
 from app.core.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
-
-logger = logging.getLogger(__name__)
 from app.schemas.user_schema import UserRegister, UserLogin, UserResponse
 from app.services import auth as auth_service
 from app.api.dependencies import get_current_user, COOKIE_NAME
 from app.models.user import User
 from app.middleware.rate_limit import limiter, RateLimits
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
