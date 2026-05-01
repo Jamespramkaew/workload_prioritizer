@@ -59,6 +59,7 @@ app.add_middleware(
         "http://localhost:8000",      # Backend itself
         "http://127.0.0.1:8000",
         "https://workload-backend-vrxw.onrender.com",  # Production
+        "https://workload-prioritizer.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],              # อนุญาตทุก HTTP methods (GET, POST, PUT, DELETE)
@@ -162,6 +163,7 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
+    "https://workload-prioritizer.vercel.app"
 ]
 
 def _cors_headers(request: Request) -> dict:

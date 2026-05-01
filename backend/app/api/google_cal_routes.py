@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import RedirectResponse
 from app.core.config import settings
 
-FRONTEND_URL = "http://localhost:3000"
+FRONTEND_URL = "https://workload-prioritizer.vercel.app"
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
