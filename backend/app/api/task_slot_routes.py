@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -8,6 +8,7 @@ from app.schemas.task_schema import (
     TaskSlotUpdate,
     TaskSlotResponse
 )
+from app.middleware.rate_limit import limiter, RateLimits
 
 router = APIRouter()
 
@@ -19,7 +20,9 @@ router = APIRouter()
     summary="Create a new slot",
     description="Create a new time slot for a specific task"
 )
+@limiter.limit(RateLimits.CREATE)
 def create_task_slot(
+    request: Request,
     task_id: int,
     slot_data: TaskSlotCreate,
     db: Session = Depends(get_db)
@@ -37,7 +40,9 @@ def create_task_slot(
     summary="Update a slot",
     description="Update an existing slot (used for drag & drop or time changes)"
 )
+@limiter.limit(RateLimits.UPDATE)
 def update_task_slot(
+    request: Request,
     task_id: int,
     slot_id: int,
     slot_data: TaskSlotUpdate,
@@ -56,7 +61,9 @@ def update_task_slot(
     summary="Delete a slot",
     description="Delete a slot (must have at least 1 slot remaining)"
 )
+@limiter.limit(RateLimits.DELETE)
 def delete_task_slot(
+    request: Request,
     task_id: int,
     slot_id: int,
     db: Session = Depends(get_db)
