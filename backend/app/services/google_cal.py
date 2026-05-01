@@ -1,3 +1,4 @@
+import logging
 import secrets
 import hashlib
 import base64
@@ -6,6 +7,9 @@ from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request as GoogleRequest
 from googleapiclient.discovery import build
 from app.core.config import settings
+from app.core.exceptions import DatabaseError
+
+logger = logging.getLogger(__name__)
 
 _SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
 
@@ -48,33 +52,43 @@ class GoogleCalendarService:
 
     @staticmethod
     def get_oauth_url(user_id: str) -> str:
-        flow = Flow.from_client_config(_CLIENT_CONFIG, scopes=_SCOPES)
-        flow.redirect_uri = settings.GOOGLE_REDIRECT_URI
-        verifier, challenge = GoogleCalendarService._pkce_pair()
-        state = f"{user_id}|{verifier}"
-        auth_url, _ = flow.authorization_url(
-            access_type="offline",
-            prompt="consent",
-            state=state,
-            code_challenge=challenge,
-            code_challenge_method="S256",
-        )
-        return auth_url
+        try:
+            flow = Flow.from_client_config(_CLIENT_CONFIG, scopes=_SCOPES)
+            flow.redirect_uri = settings.GOOGLE_REDIRECT_URI
+            verifier, challenge = GoogleCalendarService._pkce_pair()
+            state = f"{user_id}|{verifier}"
+            auth_url, _ = flow.authorization_url(
+                access_type="offline",
+                prompt="consent",
+                state=state,
+                code_challenge=challenge,
+                code_challenge_method="S256",
+            )
+            logger.info(f"OAuth URL generated for user {user_id}")
+            return auth_url
+        except Exception as e:
+            logger.error(f"Failed to generate OAuth URL: {str(e)}")
+            raise DatabaseError(f"Failed to generate Google OAuth URL: {str(e)}")
 
     @staticmethod
     def exchange_code(code: str, state: str) -> tuple[str, dict]:
-        parts = state.split("|", 1)
-        user_id = parts[0]
-        verifier = parts[1] if len(parts) > 1 else None
-        flow = Flow.from_client_config(_CLIENT_CONFIG, scopes=_SCOPES)
-        flow.redirect_uri = settings.GOOGLE_REDIRECT_URI
-        flow.fetch_token(code=code, code_verifier=verifier)
-        creds = flow.credentials
-        return user_id, {
-            "access_token": creds.token,
-            "refresh_token": creds.refresh_token,
-            "expiry": creds.expiry,
-        }
+        try:
+            parts = state.split("|", 1)
+            user_id = parts[0]
+            verifier = parts[1] if len(parts) > 1 else None
+            flow = Flow.from_client_config(_CLIENT_CONFIG, scopes=_SCOPES)
+            flow.redirect_uri = settings.GOOGLE_REDIRECT_URI
+            flow.fetch_token(code=code, code_verifier=verifier)
+            creds = flow.credentials
+            logger.info(f"OAuth code exchanged successfully for user {user_id}")
+            return user_id, {
+                "access_token": creds.token,
+                "refresh_token": creds.refresh_token,
+                "expiry": creds.expiry,
+            }
+        except Exception as e:
+            logger.error(f"Failed to exchange OAuth code: {str(e)}")
+            raise DatabaseError(f"Failed to exchange Google OAuth code: {str(e)}")
 
     @staticmethod
     def _color_id(subject_id: int | None) -> str:
@@ -95,31 +109,36 @@ class GoogleCalendarService:
         return build("calendar", "v3", credentials=creds)
 
     def create_events(self, task, slots) -> list[str]:
-        service = self._build_service()
-        event_ids = []
-        color_id = self._color_id(task.subject_id)
+        try:
+            service = self._build_service()
+            event_ids = []
+            color_id = self._color_id(task.subject_id)
 
-        for slot in slots:
-            start_hour = float(slot.start_hour)
-            duration = float(slot.hours)
-            end_hour = start_hour + duration
+            for slot in slots:
+                start_hour = float(slot.start_hour)
+                duration = float(slot.hours)
+                end_hour = start_hour + duration
 
-            def to_time(h: float) -> str:
-                hh = int(h)
-                mm = int(round((h - hh) * 60))
-                return f"{hh:02d}:{mm:02d}:00"
+                def to_time(h: float) -> str:
+                    hh = int(h)
+                    mm = int(round((h - hh) * 60))
+                    return f"{hh:02d}:{mm:02d}:00"
 
-            date_str = slot.slot_date.isoformat()
-            event = {
-                "summary": task.title or "Task",
-                "colorId": color_id,
-                "start": {"dateTime": f"{date_str}T{to_time(start_hour)}", "timeZone": "Asia/Bangkok"},
-                "end": {"dateTime": f"{date_str}T{to_time(end_hour)}", "timeZone": "Asia/Bangkok"},
-            }
-            result = service.events().insert(calendarId="primary", body=event).execute()
-            event_ids.append(result["id"])
-
-        return event_ids
+                date_str = slot.slot_date.isoformat()
+                event = {
+                    "summary": task.title or "Task",
+                    "colorId": color_id,
+                    "start": {"dateTime": f"{date_str}T{to_time(start_hour)}", "timeZone": "Asia/Bangkok"},
+                    "end": {"dateTime": f"{date_str}T{to_time(end_hour)}", "timeZone": "Asia/Bangkok"},
+                }
+                result = service.events().insert(calendarId="primary", body=event).execute()
+                event_ids.append(result["id"])
+            
+            logger.info(f"Created {len(event_ids)} Google Calendar events")
+            return event_ids
+        except Exception as e:
+            logger.error(f"Failed to create Google Calendar events: {str(e)}")
+            raise DatabaseError(f"Failed to create Google Calendar events: {str(e)}")
 
     def delete_events(self, event_ids: list[str]):
         service = self._build_service()
