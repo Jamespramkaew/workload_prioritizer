@@ -1,5 +1,4 @@
-import logging
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from fastapi.responses import RedirectResponse
 from app.core.config import settings
 from app.core.exceptions import DatabaseError
@@ -14,26 +13,22 @@ from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.models.task import Task
 from app.services.google_cal import GoogleCalendarService
+from app.middleware.rate_limit import limiter, RateLimits
 
 router = APIRouter(tags=["Google Calendar"])
 
 
 @router.get("/auth/google/login")
-def google_login(current_user: User = Depends(get_current_user)):
-    try:
-        url = GoogleCalendarService.get_oauth_url(str(current_user.id))
-        logger.info(f"Google OAuth URL generated for user {current_user.id}")
-        return RedirectResponse(url)
-    except Exception as e:
-        logger.error(f"Google login error for user {current_user.id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to initiate Google login"
-        )
+@limiter.limit(RateLimits.AUTH_LOGIN)
+def google_login(request: Request, current_user: User = Depends(get_current_user)):
+    url = GoogleCalendarService.get_oauth_url(str(current_user.id))
+    return RedirectResponse(url)
 
 
 @router.get("/auth/google/callback")
+@limiter.limit(RateLimits.AUTH_REFRESH)
 def google_callback(
+    request: Request,
     code: str = Query(...),
     state: str = Query(...),
     db: Session = Depends(get_db),
@@ -62,7 +57,9 @@ def google_callback(
 
 
 @router.post("/api/tasks/{task_id}/sync-calendar", status_code=status.HTTP_200_OK)
+@limiter.limit(RateLimits.GOOGLE_CALENDAR)
 def sync_task(
+    request: Request,
     task_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -103,7 +100,9 @@ def sync_task(
 
 
 @router.delete("/api/tasks/{task_id}/sync-calendar", status_code=status.HTTP_200_OK)
+@limiter.limit(RateLimits.GOOGLE_CALENDAR)
 def unsync_task(
+    request: Request,
     task_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
