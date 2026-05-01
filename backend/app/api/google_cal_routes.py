@@ -9,14 +9,14 @@ from app.core.database import get_db
 from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.models.task import Task
-from app.services import google_cal
+from app.services.google_cal import GoogleCalendarService
 
 router = APIRouter(tags=["Google Calendar"])
 
 
 @router.get("/auth/google/login")
 def google_login(current_user: User = Depends(get_current_user)):
-    url = google_cal.get_oauth_url(str(current_user.id))
+    url = GoogleCalendarService.get_oauth_url(str(current_user.id))
     return RedirectResponse(url)
 
 
@@ -26,7 +26,7 @@ def google_callback(
     state: str = Query(...),
     db: Session = Depends(get_db),
 ):
-    user_id, tokens = google_cal.exchange_code(code, state)
+    user_id, tokens = GoogleCalendarService.exchange_code(code, state)
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -53,22 +53,16 @@ def sync_task(
     if not task.task_slots:
         raise HTTPException(status_code=400, detail="Task has no slots to sync")
 
-    # ลบ events เก่าก่อน (ถ้ามี)
-    if task.google_event_ids:
-        google_cal.delete_events(
-            current_user.google_access_token,
-            current_user.google_refresh_token,
-            current_user.google_token_expiry,
-            task.google_event_ids.split(","),
-        )
-
-    event_ids = google_cal.create_events(
+    cal_service = GoogleCalendarService(
         current_user.google_access_token,
         current_user.google_refresh_token,
         current_user.google_token_expiry,
-        task,
-        task.task_slots,
     )
+
+    if task.google_event_ids:
+        cal_service.delete_events(task.google_event_ids.split(","))
+
+    event_ids = cal_service.create_events(task, task.task_slots)
     task.google_event_ids = ",".join(event_ids)
     db.commit()
     return {"status": "synced", "event_count": len(event_ids)}
@@ -88,12 +82,11 @@ def unsync_task(
         raise HTTPException(status_code=404, detail="Task not found")
 
     if task.google_event_ids:
-        google_cal.delete_events(
+        GoogleCalendarService(
             current_user.google_access_token,
             current_user.google_refresh_token,
             current_user.google_token_expiry,
-            task.google_event_ids.split(","),
-        )
+        ).delete_events(task.google_event_ids.split(","))
         task.google_event_ids = None
         db.commit()
 

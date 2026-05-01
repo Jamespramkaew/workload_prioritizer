@@ -6,22 +6,22 @@ from app.schemas.subject_schema import SubjectCreate, SubjectUpdate
 
 
 class SubjectService:
-    
-    @staticmethod
-    def list_subjects(db: Session, user_id: int) -> List[Subject]:
-        """List all subjects for a specific user"""
-        return db.query(Subject).filter(
+    def __init__(self, db: Session):
+        self._db = db
+
+    @property
+    def db(self) -> Session:
+        return self._db
+
+    def list_subjects(self, user_id: int) -> List[Subject]:
+        return self._db.query(Subject).filter(
             Subject.user_id == user_id
         ).order_by(Subject.sort_order, Subject.name).all()
-    
-    @staticmethod
-    def get_subject(db: Session, subject_id: int) -> Optional[Subject]:
-        """Get a single subject by ID"""
-        return db.query(Subject).filter(Subject.id == subject_id).first()
-    
-    @staticmethod
-    def create_subject(db: Session, subject_data: SubjectCreate) -> Subject:
-        """Create a new subject"""
+
+    def get_subject(self, subject_id: int) -> Optional[Subject]:
+        return self._db.query(Subject).filter(Subject.id == subject_id).first()
+
+    def create_subject(self, subject_data: SubjectCreate) -> Subject:
         subject = Subject(
             user_id=subject_data.user_id,
             name=subject_data.name,
@@ -29,18 +29,16 @@ class SubjectService:
             color=subject_data.color,
             sort_order=subject_data.sort_order
         )
-        db.add(subject)
-        db.commit()
-        db.refresh(subject)
+        self._db.add(subject)
+        self._db.commit()
+        self._db.refresh(subject)
         return subject
-    
-    @staticmethod
-    def update_subject(db: Session, subject_id: int, subject_data: SubjectUpdate) -> Optional[Subject]:
-        """Update a subject"""
-        subject = db.query(Subject).filter(Subject.id == subject_id).first()
+
+    def update_subject(self, subject_id: int, subject_data: SubjectUpdate) -> Optional[Subject]:
+        subject = self._db.query(Subject).filter(Subject.id == subject_id).first()
         if not subject:
             return None
-        
+
         if subject_data.name is not None:
             subject.name = subject_data.name
         if subject_data.short_name is not None:
@@ -49,18 +47,16 @@ class SubjectService:
             subject.color = subject_data.color
         if subject_data.sort_order is not None:
             subject.sort_order = subject_data.sort_order
-        
-        db.commit()
-        db.refresh(subject)
+
+        self._db.commit()
+        self._db.refresh(subject)
         return subject
-    
-    @staticmethod
-    def delete_subject(db: Session, subject_id: int) -> bool:
-        """Delete a subject"""
-        subject = db.query(Subject).filter(Subject.id == subject_id).first()
+
+    def delete_subject(self, subject_id: int) -> bool:
+        subject = self._db.query(Subject).filter(Subject.id == subject_id).first()
         if not subject:
             return False
-        
-        db.delete(subject)
-        db.commit()
+
+        self._db.delete(subject)
+        self._db.commit()
         return True

@@ -14,16 +14,12 @@ def list_subjects(
     user_id: int = Query(..., description="User ID to filter subjects"),
     db: Session = Depends(get_db)
 ):
-    """
-    List all subjects for a specific user.
-    """
-    return SubjectService.list_subjects(db, user_id)
+    return SubjectService(db).list_subjects(user_id)
 
 
 @router.get("/{subject_id}", response_model=SubjectResponse)
 def get_subject(subject_id: int, db: Session = Depends(get_db)):
-    """Get a single subject by ID"""
-    subject = SubjectService.get_subject(db, subject_id)
+    subject = SubjectService(db).get_subject(subject_id)
     if not subject:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -34,14 +30,12 @@ def get_subject(subject_id: int, db: Session = Depends(get_db)):
 
 @router.post("", response_model=SubjectResponse, status_code=status.HTTP_201_CREATED)
 def create_subject(subject_data: SubjectCreate, db: Session = Depends(get_db)):
-    """Create a new subject"""
-    return SubjectService.create_subject(db, subject_data)
+    return SubjectService(db).create_subject(subject_data)
 
 
 @router.patch("/{subject_id}", response_model=SubjectResponse)
 def update_subject(subject_id: int, subject_data: SubjectUpdate, db: Session = Depends(get_db)):
-    """Update a subject (name, short_name, color, sort_order)"""
-    subject = SubjectService.update_subject(db, subject_id, subject_data)
+    subject = SubjectService(db).update_subject(subject_id, subject_data)
     if not subject:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -52,8 +46,7 @@ def update_subject(subject_id: int, subject_data: SubjectUpdate, db: Session = D
 
 @router.delete("/{subject_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_subject(subject_id: int, db: Session = Depends(get_db)):
-    """Delete a subject"""
-    success = SubjectService.delete_subject(db, subject_id)
+    success = SubjectService(db).delete_subject(subject_id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -53,9 +53,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",      # Next.js dev server
-        "http://127.0.0.1:3000",      # Alternative
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",      # Next.js fallback port
+        "http://127.0.0.1:3001",
         "http://localhost:8000",      # Backend itself
-        "http://127.0.0.1:8000",      # Alternative
+        "http://127.0.0.1:8000",
     ],
     allow_credentials=True,
     allow_methods=["*"],              # อนุญาตทุก HTTP methods (GET, POST, PUT, DELETE)
@@ -157,6 +159,8 @@ async def database_exception_handler(request: Request, exc: DatabaseError):
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
 ]
 
 def _cors_headers(request: Request) -> dict:
