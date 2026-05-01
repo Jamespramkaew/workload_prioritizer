@@ -58,6 +58,7 @@ app.add_middleware(
         "http://127.0.0.1:3001",
         "http://localhost:8000",      # Backend itself
         "http://127.0.0.1:8000",
+        "https://workload-backend-vrxw.onrender.com",  # Production
     ],
     allow_credentials=True,
     allow_methods=["*"],              # อนุญาตทุก HTTP methods (GET, POST, PUT, DELETE)
