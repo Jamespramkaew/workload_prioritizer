@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
+import logging
 
 from app.core.database import get_db
 from app.services.task_slot_service import TaskSlotService
@@ -9,6 +10,8 @@ from app.schemas.task_schema import (
     TaskSlotResponse
 )
 from app.middleware.rate_limit import limiter, RateLimits
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -28,10 +31,39 @@ def create_task_slot(
     db: Session = Depends(get_db)
 ):
     """
-    Create a new slot for a task
+    Create a new time slot for a task
+    
+    Args:
+        task_id: Task ID
+        slot_data: Slot creation data
+        db: Database session
+        
+    Returns:
+        Created slot
+        
+    Raises:
+        HTTPException 400: Invalid data or validation error
+        HTTPException 404: Task not found
+        HTTPException 409: Data conflict
+        HTTPException 422: Validation error
+        HTTPException 500: Database error
     """
-    service = TaskSlotService(db)
-    return service.create_slot(task_id, slot_data)
+    try:
+        logger.info(f"Creating slot for task {task_id}: {slot_data.slot_date} {slot_data.start_hour}h")
+        service = TaskSlotService(db)
+        slot = service.create_slot(task_id, slot_data)
+        logger.info(f"Successfully created slot {slot.id} for task {task_id}")
+        return slot
+        
+    except HTTPException:
+        # Re-raise HTTPExceptions from service layer
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in create_task_slot endpoint: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create slot"
+        )
 
 
 @router.patch(
@@ -49,10 +81,40 @@ def update_task_slot(
     db: Session = Depends(get_db)
 ):
     """
-    Update an existing slot
+    Update an existing time slot
+    
+    Args:
+        task_id: Task ID
+        slot_id: Slot ID to update
+        slot_data: Update data
+        db: Database session
+        
+    Returns:
+        Updated slot
+        
+    Raises:
+        HTTPException 400: Invalid data or validation error
+        HTTPException 404: Slot not found
+        HTTPException 409: Data conflict
+        HTTPException 422: Validation error
+        HTTPException 500: Database error
     """
-    service = TaskSlotService(db)
-    return service.update_slot(task_id, slot_id, slot_data)
+    try:
+        logger.info(f"Updating slot {slot_id} for task {task_id}")
+        service = TaskSlotService(db)
+        slot = service.update_slot(task_id, slot_id, slot_data)
+        logger.info(f"Successfully updated slot {slot_id} for task {task_id}")
+        return slot
+        
+    except HTTPException:
+        # Re-raise HTTPExceptions from service layer
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in update_task_slot endpoint: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update slot"
+        )
 
 
 @router.delete(
@@ -69,8 +131,35 @@ def delete_task_slot(
     db: Session = Depends(get_db)
 ):
     """
-    Delete a slot
+    Delete a time slot
+    
+    Args:
+        task_id: Task ID
+        slot_id: Slot ID to delete
+        db: Database session
+        
+    Returns:
+        None (204 No Content)
+        
+    Raises:
+        HTTPException 400: Invalid ID or cannot delete last slot
+        HTTPException 404: Slot not found
+        HTTPException 409: Data conflict
+        HTTPException 500: Database error
     """
-    service = TaskSlotService(db)
-    service.delete_slot(task_id, slot_id)
-    return None
+    try:
+        logger.info(f"Deleting slot {slot_id} for task {task_id}")
+        service = TaskSlotService(db)
+        service.delete_slot(task_id, slot_id)
+        logger.info(f"Successfully deleted slot {slot_id} for task {task_id}")
+        return None
+        
+    except HTTPException:
+        # Re-raise HTTPExceptions from service layer
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in delete_task_slot endpoint: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete slot"
+        )
