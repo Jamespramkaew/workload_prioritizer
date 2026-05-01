@@ -192,8 +192,6 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 app.include_router(user_router, prefix="/api")
 
-# Initialize Controller
-message_controller = MessageController()
 
 # Include routers
 app.include_router(task_router, prefix="/api")
@@ -201,10 +199,3 @@ app.include_router(subject_router, prefix="/api")
 app.include_router(google_cal_routes.router)
 
 
-# API Endpoints
-@app.post("/api/echo", response_model=MessageResponse)
-def echo_message(request_body: MessageRequest):
-    """
-    Echo API endpoint that receives a message and returns it as a result
-    """
-    return message_controller.echo_message(request_body)
